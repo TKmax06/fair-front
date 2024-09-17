@@ -4,5 +4,7 @@ This template should help get you started developing with Vue 3 and TypeScript i
 
 Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
 
+注意：没有整合SVG库
+
 TODO
-① 六、整合Element-Plus
+七、利用JQuery封装同步/异步Ajax函数

@@ -8,7 +8,15 @@ const routes: Array<RouteRecordRaw> = [
         name: 'login', //也可以自定义
         component: () => import('../views/login/login.vue')
     },
-
+    { //新增内容
+        path: '/404',
+        name: '404',
+        component: () => import('../views/404.vue')
+    },
+    { //如果访问地址没有对应的url页面，则重定向到404页面
+        path: '/:pathMatch(.*)*',
+        redirect: '/404',
+    },
 ]
 
 const router = createRouter({
