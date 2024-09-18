@@ -7,4 +7,4 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 注意：没有整合SVG库
 
 TODO
-七、利用JQuery封装同步/异步Ajax函数
+八、创建左侧导航栏

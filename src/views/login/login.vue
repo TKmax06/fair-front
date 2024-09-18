@@ -1,13 +1,3 @@
-<script setup lang="js">
-  import "./style.css"
-  import {onMounted} from "vue";
-
-  onMounted(()=>{
-    import("./index.js")
-  })
-
-</script>
-
 <template>
   <div class="loginav">
     <div class="video"><video src="./img/video.mp4" muted autoplay loop></video></div>
@@ -20,11 +10,13 @@
       <ul class="logininput">
         <li>
           <i><img src="./img/user.png" alt=""></i>
-          <input class="forminput" value="anye@celestica.com" type="text" placeholder="Email">
+          <input class="forminput" value="anye@celestica.com" v-model="loginForm.username"
+                 type="text" placeholder="Email">
         </li>
         <li>
           <i><img src="./img/password.png" alt=""></i>
-          <input class="forminput" type="password" value="111111" placeholder="Password">
+          <input class="forminput" type="password" value="111111" v-model="loginForm.password"
+                 placeholder="Password">
         </li>
 
 
@@ -33,7 +25,7 @@
           <a href="#" class="text-primary"> Forget password？</a>
         </div>
         <li>
-          <a href="#" class="btn btnblock btn-lg btn-block btn-primary">Login</a>
+          <a href="#" class="btn btnblock btn-lg btn-block btn-primary" @click="login">Login</a>
         </li>
       </ul>
       <div class="boxfoot"></div>
@@ -45,6 +37,42 @@
 
 </template>
 
+<script setup lang="ts">
+  import "./style.css"
+  import {onMounted, getCurrentInstance, reactive, ref} from "vue";
+  import { ElMessage } from 'element-plus'
+  import router from '@/router/index';
+
+  onMounted(()=>{
+    import("./index.js")
+  })
+
+  const { proxy } = getCurrentInstance();
+
+  const loginForm = reactive({
+    username: null,
+    password: null
+  });
+
+  const login = () => {
+    if (loginForm.username !== "anye@celestica.com" || loginForm.password !== "111111") {
+      ElMessage.error('Invalid username or password')
+      return;
+    }
+
+    //跳转页面
+    let routeData = router.resolve({
+      name: 'Test',
+      query:{
+        active: 1,
+      }
+    });
+
+    window.open(routeData.href, '_self');
+
+  }
+
+</script>
 
 <style scoped>
 

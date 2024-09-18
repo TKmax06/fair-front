@@ -5,10 +5,15 @@ const history = createWebHistory();
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/', //url地址可以自定义
-        name: 'login', //也可以自定义
+        name: 'Login', //也可以自定义
         component: () => import('../views/login/login.vue')
     },
-    { //新增内容
+    {
+        path: '/test', //url地址可以自定义
+        name: 'Test', //也可以自定义
+        component: () => import('../views/test.vue')
+    },
+    {
         path: '/404',
         name: '404',
         component: () => import('../views/404.vue')
