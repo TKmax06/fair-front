@@ -10,22 +10,22 @@
       <ul class="logininput">
         <li>
           <i><img src="./img/user.png" alt=""></i>
-          <input class="forminput" value="anye@celestica.com" v-model="loginForm.username"
+          <input class="forminput" v-model="loginForm.username"
                  type="text" placeholder="Email">
         </li>
         <li>
           <i><img src="./img/password.png" alt=""></i>
-          <input class="forminput" type="password" value="111111" v-model="loginForm.password"
+          <input class="forminput" type="password" v-model="loginForm.password" @keydown.enter.native="login"
                  placeholder="Password">
         </li>
 
 
         <div class=" flex1">
-          <label> <input type="checkbox" checked class="aui-checkbox">&nbsp;Remember me</label>
+          <label> <input type="checkbox" checked class="aui-checkbox" v-model="isChecked">&nbsp;Remember me</label>
           <a href="#" class="text-primary"> Forget password？</a>
         </div>
         <li>
-          <a href="#" class="btn btnblock btn-lg btn-block btn-primary" @click="login">Login</a>
+          <a href="#" class="btn btnblock btn-lg btn-block btn-primary" @click="login()">Login</a>
         </li>
       </ul>
       <div class="boxfoot"></div>
@@ -39,20 +39,22 @@
 
 <script setup lang="ts">
   import "./style.css"
-  import {onMounted, getCurrentInstance, reactive, ref} from "vue";
+  import {onMounted, reactive, ref} from "vue";
   import { ElMessage } from 'element-plus'
   import router from '@/router/index';
+  import localStorageUtil from "@/utils/LocalStorageUtil.ts";
 
   onMounted(()=>{
     import("./index.js")
   })
 
-  const { proxy } = getCurrentInstance();
 
   const loginForm = reactive({
-    username: null,
-    password: null
+    username: localStorageUtil.get("username"),
+    password: localStorageUtil.get("password"),
   });
+
+  const isChecked = ref(true);
 
   const login = () => {
     if (loginForm.username !== "anye@celestica.com" || loginForm.password !== "111111") {
@@ -60,17 +62,23 @@
       return;
     }
 
+    // remember me (expire in 14 days if no login)
+    if(isChecked.value){
+      localStorageUtil.set('username', loginForm.username, 1000 * 60 * 60 * 24 * 14);
+      localStorageUtil.set('password',loginForm.password, 1000 * 60 * 60 * 24 * 14);
+    }else{
+      localStorageUtil.remove('username');
+      localStorageUtil.remove('password');
+    }
+
     //跳转页面
     let routeData = router.resolve({
       name: 'Test',
-      query:{
-        active: 1,
-      }
     });
 
     window.open(routeData.href, '_self');
-
   }
+
 
 </script>
 

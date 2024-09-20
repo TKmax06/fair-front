@@ -81,7 +81,7 @@ app.config.globalProperties.$http = function (url : string, method : string, dat
                     //后端没有运行，提交的数据有误，或者没有连接上后端项目
                     if (!e.hasOwnProperty('responseText')) {
                         ElMessage.error({
-                            message: 'The backend project is not started, or the HTTP request type and parameters are incorrect',
+                            message: 'The backend project has not started, or the HTTP request type and parameters are incorrect',
                             duration: 1200
                         });
                     }
