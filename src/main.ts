@@ -32,6 +32,8 @@ app.config.globalProperties.$baseUrl = baseUrl; //设置全局变量$baseUrl
 const minioUrl = 'http://localhost:9000/fair';
 app.config.globalProperties.$minioUrl = minioUrl;
 
+import LocalStorageUtil from "./utils/localStorageUtil.ts";
+
 //封装全局Ajax公共函数
 app.config.globalProperties.$http = function (url : string, method : string, data : JSON, async : boolean, fun : Function) {
     $.ajax({
@@ -46,7 +48,7 @@ app.config.globalProperties.$http = function (url : string, method : string, dat
             withCredentials: true
         },
         headers: {
-            token: localStorage.getItem('token')
+            token: LocalStorageUtil.get('token')
         },
         async: async,
         data: JSON.stringify(data),
@@ -72,7 +74,7 @@ app.config.globalProperties.$http = function (url : string, method : string, dat
                 const status = e.status;
                 //没有登陆系统
                 if (status == 401) {
-                    //跳转到对应的登录页面，目前页面还未创建
+                    //跳转到对应的登录页面
                     router.push({
                         name: 'Login'
                     });
@@ -95,6 +97,23 @@ app.config.globalProperties.$http = function (url : string, method : string, dat
             }
         }
     });
+};
+
+//封装用于判断用户是否具有某些权限的公共函数
+app.config.globalProperties.isAuth = function (role : string[]) {
+    const roles : string | null = localStorage.getItem('role');
+    if (roles) {
+        let flag = false;
+        for (let one of role) {
+            if (roles.includes(one)) {
+                flag = true;
+                break;
+            }
+        }
+        return flag;
+    } else { //如果roles为空
+        return false;
+    }
 };
 
 app.mount('#app')

@@ -9,9 +9,9 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../views/login/login.vue')
     },
     {
-        path: '/test', //url地址可以自定义
-        name: 'Test', //也可以自定义
-        component: () => import('../views/test.vue')
+        path: '/main', //url地址可以自定义
+        name: 'Main', //也可以自定义
+        component: () => import('../views/main.vue')
     },
     {
         path: '/404',

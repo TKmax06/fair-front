@@ -40,7 +40,7 @@
 <script setup lang="ts">
   import "./style.css"
   import {onMounted, reactive, ref, getCurrentInstance} from "vue";
-  import { ElMessage } from 'element-plus'
+  import { ElMessage, ElLoading } from 'element-plus'
   import router from '@/router/index';
   import localStorageUtil from "@/utils/LocalStorageUtil.ts";
   import {isUsername, isPassword} from "@/utils/validate.ts";
@@ -69,26 +69,23 @@
 
     //校验密码
     if(!isPassword(loginForm.password)) {
-      ElMessage.error('Password must between 5 to 8 characters')
+      ElMessage.error('Password must between 4 to 8 characters')
       return;
     }
 
-    //封装数据
-    const data = {
-      username: loginForm.username,
-      password: loginForm.password
-    }
-
-    ElMessage.success("Loading...");
+    const loading = ElLoading.service({
+      lock: true,
+      text: 'Loading',
+      background: 'rgba(0, 0, 0, 0.7)',
+    })
 
     proxy.$http("/user/login", "POST", loginForm, true, resp => {
-
       if(resp.result) {
         const role = resp.role; //获取角色
         const token = resp.token; //获取令牌
 
         //向浏览器storage保存令牌和权限列表
-        localStorageUtil.set('role', role, 1000 * 60 * 60 * 24 * 14);
+        localStorageUtil.set("role", role, 1000 * 60 * 60 * 24 * 14);
         localStorageUtil.set('token', token, 1000 * 60 * 60 * 24 * 14);
 
         // remember me (expire in 14 days if no login)
@@ -100,20 +97,21 @@
           localStorageUtil.remove('password');
         }
 
+        loading.close();
+
         //跳转页面
         let routeData = router.resolve({
-          name: 'Test',
+          name: 'Main',
         });
 
         window.open(routeData.href, '_self');
       }else{
-        ElMessage.closeAll();
-        ElMessage.error('Wrong email or password')
+        loading.close();
+        ElMessage.error('Login failed')
       }
     });
 
   }
-
 
 </script>
 

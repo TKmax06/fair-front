@@ -34,13 +34,13 @@ class LocalStorageUtil {
     get(key) {
         try {
             const storageData = this.storage.getItem(key);
-            console.log('storageData: ', storageData);
+            //console.log('storageData: ', storageData);
             if (!storageData) {
                 return null;
             }
             const tempObj = JSON.parse(storageData);
             const expired = tempObj.expired || 0;
-            console.log(expired);
+            //console.log(expired);
             if (expired && Date.now() > expired) {
                 this.remove(key);
                 return null;

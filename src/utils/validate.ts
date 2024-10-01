@@ -24,5 +24,5 @@ export function isUsername(s: string) {
  * 验证密码
  */
 export function isPassword(s: string) {
-    return /^.{5,8}$/.test(s);
+    return /^.{4,8}$/.test(s);
 }
