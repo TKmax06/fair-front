@@ -32,7 +32,7 @@ app.config.globalProperties.$baseUrl = baseUrl; //设置全局变量$baseUrl
 const minioUrl = 'http://localhost:9000/fair';
 app.config.globalProperties.$minioUrl = minioUrl;
 
-import LocalStorageUtil from "./utils/localStorageUtil.ts";
+import localStorageUtil from "./utils/localStorageUtil.ts";
 
 //封装全局Ajax公共函数
 app.config.globalProperties.$http = function (url : string, method : string, data : JSON, async : boolean, fun : Function) {
@@ -48,7 +48,7 @@ app.config.globalProperties.$http = function (url : string, method : string, dat
             withCredentials: true
         },
         headers: {
-            token: LocalStorageUtil.get('token')
+            token: localStorageUtil.get('token')
         },
         async: async,
         data: JSON.stringify(data),
