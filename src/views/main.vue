@@ -1,4 +1,5 @@
 <template>
+
   <div class="site-wrapper"
        :class="{ 'site-sidebar--fold': sidebar.sidebarFold }"
        v-loading.fullscreen.lock="loading" element-loading-text="Loading...">
@@ -13,15 +14,13 @@
       <div class="navbar-container"
            :class="{'navbar-container--fold': sidebar.sidebarFold}">
         <div class="switch" @click="handleSwitch">
-          <SvgIcon name="zhedie" class="icon-svg" />
+          <el-icon><Menu /></el-icon>
         </div>
         <div class="right-container">
           <el-dropdown>
 						<span class="el-dropdown-link">
 							<span class="avatar-container">
-								<el-avatar shape="circle" :size="25"
-                           :src="localAvatar"
-                           :icon="UserFilled"></el-avatar>
+								<el-avatar shape="circle" :size="25" :src="localAvatar"></el-avatar>
 							</span>
 							{{ user.name }}
 						</span>
@@ -44,9 +43,9 @@
                  active-text-color="#fff" text-color="#8a979e">
 
           <!-- 一级路由：没有子路由 -->
-          <el-menu-item index="home" @click="$router.push({ name: 'Home' })">
+          <el-menu-item index="Home" @click="$router.push({ name: 'Home' })" >
             <el-icon>
-              <SvgIcon name="home" class="icon-svg" />
+              <HomeFilled />
             </el-icon>
             <span slot="title">Home</span>
           </el-menu-item>
@@ -56,33 +55,25 @@
 
             <template #title>
               <el-icon>
-                <SvgIcon name="users_fill" class="icon-svg" />
+                <Compass />
               </el-icon>
-              <span slot="title">Fair Tracker</span>
+              <span slot="title">Tracker</span>
             </template>
 
             <!-- 子路由1 -->
-            <el-menu-item index="fair" @click="$router.push({ name: 'Fair' })">
+            <el-menu-item index="Fair" @click="$router.push({ name: 'Fair' })">
               <el-icon>
-                <SvgIcon name="company_fill" class="icon-svg" />
+                <InfoFilled />
               </el-icon>
               <span slot="title">Main</span>
             </el-menu-item>
 
             <!-- 子路由2 -->
-            <el-menu-item index="Approved" @click="$router.push({ name: 'Approved' })">
+            <el-menu-item index="Approved" @click="$router.push({ name: 'approvedFair'})">
               <el-icon>
-                <SvgIcon name="company_fill" class="icon-svg" />
+                <SuccessFilled />
               </el-icon>
               <span slot="title">Approved</span>
-            </el-menu-item>
-
-            <!-- 子路由3 -->
-            <el-menu-item index="C_Approved" @click="$router.push({ name: 'C_Approved' })">
-              <el-icon>
-                <SvgIcon name="company_fill" class="icon-svg" />
-              </el-icon>
-              <span slot="title">Conditionally Approved</span>
             </el-menu-item>
 
           </el-sub-menu>
@@ -125,7 +116,7 @@
   import { useRoute, useRouter } from 'vue-router';
   import {Component, defineComponent, watch} from 'vue';
   import localStorageUtil from "@/utils/localStorageUtil.ts";
-  import LocalStorageUtil from "@/utils/localStorageUtil.ts";
+  import {Menu, HomeFilled , Compass, InfoFilled, SuccessFilled} from '@element-plus/icons-vue'
 
   //用于获取路由参数
   const route = useRoute();
@@ -134,6 +125,9 @@
   const { proxy } = getCurrentInstance();
 
   const localAvatar = ref("/avatar.gif");
+
+  const loading = ref(false);
+
 
   //左边栏常量
   const sidebar = reactive({

@@ -31,6 +31,15 @@ const routes: Array<RouteRecordRaw> = [
                     isTab: true  //要用到tab控件
                 }
             },
+            {
+                path: 'approved',
+                name: 'approvedFair',
+                component: () => import('../views/tracker/approved.vue'),
+                meta: {
+                    title: 'Approved Fair', //标签文字
+                    isTab: true  //要用到tab控件
+                }
+            },
         ]
     },
 

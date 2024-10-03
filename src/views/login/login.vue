@@ -101,7 +101,7 @@
 
         //跳转页面
         let routeData = router.resolve({
-          name: 'Main',
+          name: 'Home',
         });
 
         window.open(routeData.href, '_self');
