@@ -102,12 +102,14 @@
         //跳转页面
         let routeData = router.resolve({
           name: 'Home',
+          //路由传参
+          query: {"username": loginForm.username}
         });
 
         window.open(routeData.href, '_self');
       }else{
         loading.close();
-        ElMessage.error('Login failed')
+        ElMessage.error('Wrong email or password')
       }
     });
 

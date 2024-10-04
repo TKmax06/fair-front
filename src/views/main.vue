@@ -1,5 +1,6 @@
 <template>
 
+  <!-- header -->
   <div class="site-wrapper"
        :class="{ 'site-sidebar--fold': sidebar.sidebarFold }"
        v-loading.fullscreen.lock="loading" element-loading-text="Loading...">
@@ -22,7 +23,7 @@
 							<span class="avatar-container">
 								<el-avatar shape="circle" :size="25" :src="localAvatar"></el-avatar>
 							</span>
-							{{ user.name }}
+							{{ username }}
 						</span>
             <template #dropdown>
               <el-dropdown-menu>
@@ -34,7 +35,7 @@
       </div>
     </nav>
 
-    <!-- 以下为新添内容 -->
+    <!-- 左侧导航 -->
     <aside class="site-sidebar site-sidebar--dark">
       <div class="site-sidebar__inner">
         <el-menu :default-active="siteContent.menuActiveName || 'Home'"
@@ -112,14 +113,20 @@
 <script setup lang="ts">
   import { UserFilled } from '@element-plus/icons-vue';
   import { isURL } from '@/utils/validate';
-  import { ref, reactive, provide, getCurrentInstance, onMounted } from 'vue';
+  import { ref, reactive, provide, getCurrentInstance, onMounted, Component, defineComponent, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
-  import {Component, defineComponent, watch} from 'vue';
   import localStorageUtil from "@/utils/localStorageUtil.ts";
   import {Menu, HomeFilled , Compass, InfoFilled, SuccessFilled} from '@element-plus/icons-vue'
 
   //用于获取路由参数
   const route = useRoute();
+
+  let username = null;
+
+  onMounted(() => {
+    username = route.query.username?.split("@")[0];
+  })
+
   //用于切换路由引用的页面
   const router = useRouter();
   const { proxy } = getCurrentInstance();
@@ -127,7 +134,6 @@
   const localAvatar = ref("/avatar.gif");
 
   const loading = ref(false);
-
 
   //左边栏常量
   const sidebar = reactive({
@@ -144,11 +150,6 @@
     mainTabs: [],
     mainTabsActiveName: '',
     menuActiveName: ''
-  });
-
-  //用户信息常量
-  const user = reactive({
-    name: localStorageUtil.get("username").split("@")[0],
   });
 
   //退出登录
