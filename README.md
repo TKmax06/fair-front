@@ -11,3 +11,6 @@ TODO
 
 用户列表地址：
 https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0QCPo/edit?gid=0#gid=0
+
+Fair Tracker Template:
+https://docs.google.com/spreadsheets/d/1HI2bdVSGXTp91DDVYUUYkpe_0Qhu83R_erJ11eSnw1A/edit?gid=0#gid=0

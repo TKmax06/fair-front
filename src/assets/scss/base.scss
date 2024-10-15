@@ -340,7 +340,7 @@ img {
 		background: $content--background-color;
 	}
 	&--tabs {
-		padding: 55px 0 0;
+		padding: 55px 15px 0;
 	}
 	> .el-tabs {
 		> .el-tabs__header {
@@ -474,7 +474,7 @@ img {
 	}
 }
 .navbar-container--fold {
-	margin-left: 0px;
+	margin-left: 0;
 }
 
 .el-empty {

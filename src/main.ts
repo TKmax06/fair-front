@@ -6,6 +6,9 @@ const app = createApp(App)
 import router from './router'
 app.use(router)
 
+//导入SVG依赖库，可以在页面上显示SVG图片（此处为新增）
+import 'virtual:svg-icons-register';
+
 //引入ElementPlus的css文件
 import 'element-plus/dist/index.css'
 

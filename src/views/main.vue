@@ -1,5 +1,4 @@
 <template>
-
   <!-- header -->
   <div class="site-wrapper"
        :class="{ 'site-sidebar--fold': sidebar.sidebarFold }"
@@ -15,7 +14,7 @@
       <div class="navbar-container"
            :class="{'navbar-container--fold': sidebar.sidebarFold}">
         <div class="switch" @click="handleSwitch">
-          <el-icon><Menu /></el-icon>
+          <el-icon class="icon-svg"><Menu /></el-icon>
         </div>
         <div class="right-container">
           <el-dropdown>
@@ -40,12 +39,12 @@
       <div class="site-sidebar__inner">
         <el-menu :default-active="siteContent.menuActiveName || 'Home'"
                  :collapse="sidebar.sidebarFold" :collapseTransition="false"
-                 class="site-sidebar__menu" background-color="#263238"
+                 background-color="#263238"
                  active-text-color="#fff" text-color="#8a979e">
 
           <!-- 一级路由：没有子路由 -->
           <el-menu-item index="Home" @click="$router.push({ name: 'Home' })" >
-            <el-icon>
+            <el-icon class="icon-svg">
               <HomeFilled />
             </el-icon>
             <span slot="title">Home</span>
@@ -55,7 +54,7 @@
           <el-sub-menu index="Fair Tracker" :popper-class="'site-sidebar--' + sidebar.sidebarLayoutSkin + '-popper'">
 
             <template #title>
-              <el-icon>
+              <el-icon class="icon-svg">
                 <Compass />
               </el-icon>
               <span slot="title">Tracker</span>
@@ -63,7 +62,7 @@
 
             <!-- 子路由1 -->
             <el-menu-item index="Fair" @click="$router.push({ name: 'Fair' })">
-              <el-icon>
+              <el-icon class="icon-svg">
                 <InfoFilled />
               </el-icon>
               <span slot="title">Main</span>
@@ -71,7 +70,7 @@
 
             <!-- 子路由2 -->
             <el-menu-item index="Approved" @click="$router.push({ name: 'approvedFair'})">
-              <el-icon>
+              <el-icon class="icon-svg">
                 <SuccessFilled />
               </el-icon>
               <span slot="title">Approved</span>
@@ -185,8 +184,7 @@
       siteContent.mainTabsActiveName = tab.name;
       //选中某个菜单项
       siteContent.menuActiveName = tab.name;
-    }
-    else {
+    } else {
       siteContent.mainTabs = []
       //取消选中某个Tab控件
       siteContent.mainTabsActiveName = "";
@@ -239,7 +237,6 @@
 
   function selectedTabHandle(tab) {
     router.push({
-      //想必很多同学现在才恍然大悟，为什么要用Vue页面的路由名称作为Tab面板的名字
       name: tab.paneName
     });
   }
