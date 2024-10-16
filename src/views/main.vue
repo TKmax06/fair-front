@@ -110,7 +110,6 @@
 </template>
 
 <script setup lang="ts">
-  import { UserFilled } from '@element-plus/icons-vue';
   import { isURL } from '@/utils/validate';
   import { ref, reactive, provide, getCurrentInstance, onMounted, Component, defineComponent, watch } from 'vue';
   import { useRoute, useRouter } from 'vue-router';

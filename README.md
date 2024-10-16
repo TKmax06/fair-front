@@ -14,3 +14,6 @@ https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0Q
 
 Fair Tracker Template:
 https://docs.google.com/spreadsheets/d/1HI2bdVSGXTp91DDVYUUYkpe_0Qhu83R_erJ11eSnw1A/edit?gid=0#gid=0
+
+Fair Tracker Dev:
+https://docs.google.com/spreadsheets/d/1J2cK3eDYwquAmBwWuxVsehoQK-ZyJ3eAF4HHGX4QZfY/edit?gid=1341955823#gid=1341955823
