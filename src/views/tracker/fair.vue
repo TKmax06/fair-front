@@ -28,7 +28,7 @@
 
         <!-- 新增按钮 -->
         <el-button type="primary"
-                   :disabled="!proxy.isAuth(['ADMIN', 'ENG'])"
+                   :disabled="!proxy.isAuth(['ENG'])"
                    @click="addHandle()">
           Add
         </el-button>
@@ -38,8 +38,7 @@
     </el-form>
 
     <!-- 表格 -->
-    <el-table :data="data.dataList" border v-loading="data.loading"
-              :header-cell-style="{'background': '#f5f7fa'}" fit>
+    <el-table :data="data.dataList" border v-loading="data.loading" :header-cell-style="headerCellStyle">
       <el-table-column label="ENG" header-align="center" align="center" width="50">
         <el-table-column type="index" header-align="center" align="center" width="50" label="#">
           <!-- #default="scope" 定义了一个名为 default 的插槽，并将当前行的数据传递给一个名为 scope 的变量 -->
@@ -195,9 +194,23 @@
     selections: [] //记录勾选的行数
   })
 
+  const headerCellStyle = ({row, column, rowIndex, columnIndex}) => {
+    if(columnIndex === 0 && column.label !== "#"){
+      console.log(column.label)
+      return { backgroundColor: '#f56c6c', color:'black' };
+    }else if (columnIndex === 1 && column.label !== "Date"){
+      return { backgroundColor: '#5f94e0', color:'black' };
+    }else if (columnIndex === 2 && column.label !== "CLS PN"){
+      return { backgroundColor: '#e1deff', color:'black' };
+    }
+    else if (columnIndex === 3 && column.label !== "Revision"){
+      return { backgroundColor: '#34ba97', color:'black' };
+    }
+  }
+
 
 </script>
 
 <style scoped lang="less">
-  @import "./fair";
+
 </style>
