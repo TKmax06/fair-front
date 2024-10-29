@@ -40,7 +40,7 @@
 <script setup lang="ts">
   import "./style.css"
   import {onMounted, reactive, ref, getCurrentInstance} from "vue";
-  import { ElMessage, ElLoading } from 'element-plus'
+  import { ElMessage, ElLoading, } from 'element-plus'
   import router from '@/router/index';
   import localStorageUtil from "@/utils/LocalStorageUtil.ts";
   import {isUsername, isPassword} from "@/utils/validate.ts";
@@ -107,6 +107,7 @@
         });
 
         window.open(routeData.href, '_self');
+
       }else{
         loading.close();
         ElMessage.error('Wrong email or password')

@@ -7,7 +7,10 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 注意：没有整合SVG库
 
 TODO
-13.3 面包屑
+Main tracker:
+① 当Eng添加一个新的record时，先检查CLS PN，如果存在，则抛出消息提示CLS PNxxx已经存在，原因是xxx，是否还要添加？
+只有点击确定，才能添加
+② Eng只能修改Reason
 
 用户列表地址：
 https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0QCPo/edit?gid=0#gid=0

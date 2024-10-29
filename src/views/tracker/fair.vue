@@ -108,7 +108,7 @@
       <el-table-column header-align="center" align="center" width="100" label="Action" fixed="right">
         <template #default="scope">
           <el-button type="primary" link style="padding: 0;"
-                     v-if="proxy.isAuth(['ADMIN', 'ENG'])"
+                     :disabled="!proxy.isAuth(['ADMIN', 'ENG'])"
                      @click="editHandle(scope.row.id)">
             Edit
           </el-button>
@@ -116,6 +116,97 @@
       </el-table-column>
 
     </el-table>
+
+    <!-- Add/Edit Fair(ENG) -->
+    <el-dialog v-model="dialog.visible" :title="!dialog.dataForm.id ? 'Add' : 'Edit'"
+               :close-on-click-modal="false" width="550px" v-if="proxy.isAuth(['ENG'])">
+
+      <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
+
+        <!-- prop="username": 绑定 dialog.dataForm 中 username 的验证规则，并应用到文本框上-->
+        <el-form-item label="CLS PN" prop="clspn" label-position="left">
+          <el-input v-model="dialog.dataForm.clspn"
+                    maxlength="20" clearable />
+        </el-form-item>
+
+        <el-form-item label="Revision" prop="revision" label-position="left">
+          <el-input v-model="dialog.dataForm.revision"
+                    maxlength="5" clearable />
+        </el-form-item>
+
+        <!-- customer is auto filled based on the suffix of the CLS PN -->
+        <el-form-item label="Customer" prop="customer" label-position="left">
+          <el-input v-model="dialog.dataForm.customer" disabled/>
+        </el-form-item>
+
+        <el-form-item label="Eng Name" prop="engname" label-position="left">
+          <el-input v-model="dialog.dataForm.engname"/>
+        </el-form-item>
+
+        <el-form-item label="Deviation #" prop="devnumber" label-position="left">
+          <el-input v-model="dialog.dataForm.devnumber"
+                    maxlength="10" clearable />
+        </el-form-item>
+
+        <el-form-item label="Deviation QTY" prop="devqty" label-position="left">
+          <el-input v-model="dialog.dataForm.devqty"
+                    maxlength="10" clearable />
+        </el-form-item>
+
+        <el-form-item label="Deviation Dropbox" prop="devbox" label-position="left">
+          <el-upload
+              class="upload-pdf"
+              drag
+              action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+              multiple
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              Drop file here or <em>click to upload</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                PDF files with a size less than 1MB
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+
+        <el-form-item label="Reason" prop="reason" label-position="left">
+          <el-input
+              v-model="dialog.dataForm.reason"
+              style="width: 100%"
+              :rows="5"
+              type="textarea"
+              placeholder="Enter reason here"
+          />
+        </el-form-item>
+
+        <!-- dropdown list -->
+        <el-form-item label="Planner Email" prop="planneremail" label-position="left">
+          <el-select v-model="dialog.dataForm.planneremail" placeholder="Select planner">
+            <el-option v-for="p in dataForm.plannerList" :label="p.email"
+                       :value="p.id" :key="p.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="Fair Type" prop="fairtype" label-position="left">
+          <el-select v-model="dialog.dataForm.fairtype">
+            <el-option label="Full" value="Full"/>
+            <el-option label="Partial" value="Partial" />
+          </el-select>
+        </el-form-item>
+
+      </el-form>
+
+      <!-- 弹窗页脚 -->
+      <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialog.visible = false">Cancel</el-button>
+        <el-button type="primary" @click="dataFormSubmit">{{!dialog.dataForm.id ? 'Add' : 'Edit'}}</el-button>
+      </span>
+      </template>
+    </el-dialog>
 
     <el-divider />
 
@@ -136,20 +227,53 @@
   const {proxy} = getCurrentInstance();
   import {dayjs} from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
+  import { UploadFilled } from '@element-plus/icons-vue'
 
   let {flexWidth} = f;
 
   const dataForm = reactive({
     dates: null,
-    roleList:[],
+    plannerList:[],
     deptList:[]
   })
 
-  //搜索条件的校验规则
-  const dataRule = reactive({
-    //姓名必须为1-10位汉字
-    name: [{required: false, message: '姓名格式错误!', pattern: '^[\u4e00-\u9fa5]{1,10}$'}],
+  //弹窗控件变量
+  const dialog = reactive({
+    visible: false, //是否显示弹窗，调试完成后记得改为false
+    update: false,
+    dataForm: {
+      id: null, //Fair主键
+      clspn: null,
+      revision: null,
+      customer: null,
+      engname: null,
+      devnumber: "N/A",
+      devqty: "N/A",
+      reason: null,
+      planneremail: null,
+      fairtype: null
+    },
+
+    //数据校验
+    dataRule: {
+      clspn: [
+        {required: true, message: 'PN cannot be empty!'}
+      ],
+      revision: [
+        {required: true, message: 'Revision cannot be empty!'}
+      ],
+      customer: [{required: true, message: 'Customer cannot be empty!'}],
+      engname: [{required: true, message: 'Eng name cannot be empty!'}],
+      devnumber: [{required: true, message: 'Deviation # cannot be empty!'}],
+      devqty: [{required: true, message: 'Deviation QTY cannot be empty!'}],
+      devbox: [{required: true, message: 'Deviation Dropbox cannot be empty!'}],
+      reason: [{required: true, message: 'Reason cannot be empty!'}],
+      planneremail: [{required: true, message: 'Planner email cannot be empty!'}],
+      fairtype: [{required: true, message: 'Fair type cannot be empty!'}]
+    }
+
   })
+
 
   const searchHandle = () => {
     console.log(dataForm.dates);
@@ -191,7 +315,6 @@
     pageSize: 10, //每页记录数
     totalCount: 0, //总记录数
     loading: false, //不显示加载进度条
-    selections: [] //记录勾选的行数
   })
 
   const headerCellStyle = ({row, column, rowIndex, columnIndex}) => {
@@ -208,9 +331,21 @@
     }
   }
 
+  //新增按钮点击事件
+  const addHandle = () => {
+    dialog.dataForm.id = null;
+    dialog.update = false;
+    dialog.visible = true; //显示弹窗
+    proxy.$nextTick(()=>{//确保DOM更新后执行操作
+      proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
+    })
+  }
+
 
 </script>
 
 <style scoped lang="less">
-
+  .upload-pdf{
+    width: 100%;
+  }
 </style>
