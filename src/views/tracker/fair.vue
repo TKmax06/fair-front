@@ -126,7 +126,7 @@
         <!-- prop="username": 绑定 dialog.dataForm 中 username 的验证规则，并应用到文本框上-->
         <el-form-item label="CLS PN" prop="clspn" label-position="left">
           <el-input v-model="dialog.dataForm.clspn"
-                    maxlength="20" clearable />
+                    maxlength="20" clearable @change="autoFillCustomer"/>
         </el-form-item>
 
         <el-form-item label="Revision" prop="revision" label-position="left">
@@ -223,13 +223,14 @@
 
 <script setup lang="ts">
 
-  import {reactive, getCurrentInstance, ref, onMounted} from "vue";
-  const {proxy} = getCurrentInstance();
-  import {dayjs} from "element-plus";
+  import {reactive, getCurrentInstance, onMounted} from "vue";
+  import {dayjs, ElMessage } from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
   import { UploadFilled } from '@element-plus/icons-vue'
 
   let {flexWidth} = f;
+
+  const {proxy} = getCurrentInstance();
 
   const dataForm = reactive({
     dates: null,
@@ -246,6 +247,7 @@
       clspn: null,
       revision: null,
       customer: null,
+      customerList: [],
       engname: null,
       devnumber: "N/A",
       devqty: "N/A",
@@ -273,7 +275,6 @@
     }
 
   })
-
 
   const searchHandle = () => {
     console.log(dataForm.dates);
@@ -334,11 +335,40 @@
   //新增按钮点击事件
   const addHandle = () => {
     dialog.dataForm.id = null;
+    dialog.dataForm.customerList = [];
     dialog.update = false;
+    //get customer info
+    getCustomerList();
     dialog.visible = true; //显示弹窗
     proxy.$nextTick(()=>{//确保DOM更新后执行操作
       proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
     })
+  }
+
+  const getCustomerList = () => {
+    proxy.$http("/customer/query-suffix", "GET", null, true, resp => {
+      if(resp.code === 200){
+        dialog.dataForm.customerList = resp.result;
+      }else{
+        ElMessage.error('Unable to get customer list')
+      }
+    })
+  }
+
+  const autoFillCustomer = (val) => {
+    let upper = val.toUpperCase().trim();
+    dialog.dataForm.clspn = upper;
+    let pnSuffix = dialog.dataForm.clspn?.slice(-3);
+    let suffixList = dialog.dataForm.customerList;
+    let match = suffixList.filter( c => c.suffix === pnSuffix)[0];
+    if(match == undefined){
+      dialog.dataForm.customer = null;
+      ElMessage.error('Unable to find the customer for this PN!')
+      return;
+    }
+
+    dialog.dataForm.customer = match.customer;
+
   }
 
 
