@@ -157,16 +157,19 @@
           <el-upload
               class="upload-pdf"
               drag
-              action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-              multiple
+              :action="dialog.upload.action"
+              :headers="dialog.upload.headers"
+              :data="dialog.upload.data" :show-file-list="true"
+              accept=".pdf" multiple :before-upload="pdfBeforeUpload"
+              :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
-              Drop file here or <em>click to upload</em>
+              Drop PDF here or <em>click to upload</em>
             </div>
             <template #tip>
               <div class="el-upload__tip">
-                PDF files with a size less than 1MB
+                Each PDF file size less than 1MB
               </div>
             </template>
           </el-upload>
@@ -178,14 +181,15 @@
               style="width: 100%"
               :rows="5"
               type="textarea"
-              placeholder="Enter reason here"
+              maxlength="210"
+              placeholder="Enter reason here, maximum 200 words"
           />
         </el-form-item>
 
         <!-- dropdown list -->
         <el-form-item label="Planner Email" prop="planneremail" label-position="left">
           <el-select v-model="dialog.dataForm.planneremail" placeholder="Select planner">
-            <el-option v-for="p in dataForm.plannerList" :label="p.email"
+            <el-option v-for="p in dialog.dataForm.plannerList" :label="p.email"
                        :value="p.id" :key="p.id" />
           </el-select>
         </el-form-item>
@@ -224,18 +228,18 @@
 <script setup lang="ts">
 
   import {reactive, getCurrentInstance, onMounted} from "vue";
-  import {dayjs, ElMessage } from "element-plus";
+  import {dayjs, ElMessage, UploadFile, UploadFiles} from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
   import { UploadFilled } from '@element-plus/icons-vue'
+  import localStorageUtil from "@/utils/localStorageUtil.ts";
 
   let {flexWidth} = f;
 
   const {proxy} = getCurrentInstance();
 
+  //过滤控件变量
   const dataForm = reactive({
-    dates: null,
-    plannerList:[],
-    deptList:[]
+    dates: null
   })
 
   //弹窗控件变量
@@ -248,12 +252,27 @@
       revision: null,
       customer: null,
       customerList: [],
+      plannerList: [],
       engname: null,
       devnumber: "N/A",
       devqty: "N/A",
       reason: null,
       planneremail: null,
-      fairtype: null
+      fairtype: null,
+      pdf: null,
+      pdfUrl: null
+    },
+
+    //上传PDF
+    upload: {
+      //上传对应方法
+      action: `${proxy.$baseUrl}/upload/uploadPDF`,
+      headers: {//请求头带令牌
+        token: localStorageUtil.get('token'),
+      },
+      data: {
+        id: null
+      }
     },
 
     //数据校验
@@ -336,23 +355,38 @@
   const addHandle = () => {
     dialog.dataForm.id = null;
     dialog.dataForm.customerList = [];
+    dialog.dataForm.plannerList = [];
     dialog.update = false;
-    //get customer info
-    getCustomerList();
+    //get customer list
+    getList("customer");
+    //get planner list
+    getList("planner");
     dialog.visible = true; //显示弹窗
     proxy.$nextTick(()=>{//确保DOM更新后执行操作
       proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
     })
   }
 
-  const getCustomerList = () => {
-    proxy.$http("/customer/query-suffix", "GET", null, true, resp => {
-      if(resp.code === 200){
-        dialog.dataForm.customerList = resp.result;
-      }else{
-        ElMessage.error('Unable to get customer list')
-      }
-    })
+  const getList = (name) => {
+    if(name === "customer"){
+      proxy.$http("/customer/query-customer", "GET", null, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.customerList = resp.result;
+        }else{
+          ElMessage.error('Unable to get the customer list')
+        }
+      })
+    }
+
+    if(name === "planner"){
+      proxy.$http("/planner/query-planner", "GET", null, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.plannerList = resp.result;
+        }else{
+          ElMessage.error('Unable to get the planner list')
+        }
+      })
+    }
   }
 
   const autoFillCustomer = (val) => {
@@ -369,6 +403,35 @@
 
     dialog.dataForm.customer = match.customer;
 
+  }
+
+  //校验上传文件大小(< 1M)
+  const pdfBeforeUpload = (file) => {
+    let size = file.size / 1024 / 1024;
+
+    if(size > 1){
+      ElMessage.error('PDF size cannot exceed 1M')
+      return false;
+    }
+
+    return true;
+  }
+
+  //上传文件成功回调函数
+  const pdfUploadSuccess = (resp : any, uploadFile : UploadFile, uploadFiles :  UploadFiles) => {
+    if(resp.code === 200){
+      let path = resp.result;
+      //保存图片相对地址，添加或者修改商品的时候，要上传给后端web方法
+      dialog.dataForm.pdf = path;
+      //上传控件中显示已上传的图片
+      dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
+    }
+  }
+
+  //上传文件失败回调函数
+  const pdfUploadError = (e) => {
+    ElMessage.error('Unable to upload PDF')
+    console.error(e)
   }
 
 
