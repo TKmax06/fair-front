@@ -119,7 +119,7 @@
 
     <!-- Add/Edit Fair(ENG) -->
     <el-dialog v-model="dialog.visible" :title="!dialog.dataForm.id ? 'Add' : 'Edit'"
-               :close-on-click-modal="false" width="550px" v-if="proxy.isAuth(['ENG'])">
+               :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['ENG'])">
 
       <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
 
@@ -160,8 +160,10 @@
               :action="dialog.upload.action"
               :headers="dialog.upload.headers"
               :data="dialog.upload.data" :show-file-list="true"
-              accept=".pdf" multiple :before-upload="pdfBeforeUpload"
+              accept=".pdf" :before-upload="pdfBeforeUpload"
               :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
+              :on-remove="pdfRemoveSuccess" :before-remove="pdfBeforeRemove"
+              limit="3"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
@@ -169,7 +171,7 @@
             </div>
             <template #tip>
               <div class="el-upload__tip">
-                Each PDF file size less than 1MB
+                No more than 3 PDFs allowed to upload, each PDF file size less than 1MB
               </div>
             </template>
           </el-upload>
@@ -198,6 +200,8 @@
           <el-select v-model="dialog.dataForm.fairtype">
             <el-option label="Full" value="Full"/>
             <el-option label="Partial" value="Partial" />
+            <el-option label="Delta" value="Delta" />
+            <el-option label="Full by similarity" value="Full by similarity" />
           </el-select>
         </el-form-item>
 
@@ -266,7 +270,7 @@
     //上传PDF
     upload: {
       //上传对应方法
-      action: `${proxy.$baseUrl}/upload/uploadPDF`,
+      action: `${proxy.$baseUrl}/file/uploadPDF`,
       headers: {//请求头带令牌
         token: localStorageUtil.get('token'),
       },
@@ -390,8 +394,7 @@
   }
 
   const autoFillCustomer = (val) => {
-    let upper = val.toUpperCase().trim();
-    dialog.dataForm.clspn = upper;
+    dialog.dataForm.clspn = val.toUpperCase().trim();
     let pnSuffix = dialog.dataForm.clspn?.slice(-3);
     let suffixList = dialog.dataForm.customerList;
     let match = suffixList.filter( c => c.suffix === pnSuffix)[0];
@@ -423,7 +426,7 @@
       let path = resp.result;
       //保存图片相对地址，添加或者修改商品的时候，要上传给后端web方法
       dialog.dataForm.pdf = path;
-      //上传控件中显示已上传的图片
+      //上传控件中显示已上传的文件
       dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
     }
   }
@@ -432,6 +435,21 @@
   const pdfUploadError = (e) => {
     ElMessage.error('Unable to upload PDF')
     console.error(e)
+  }
+
+  //删除文件之前的回调函数
+  const pdfBeforeRemove = () => {
+
+  }
+
+  //删除文件成功回调函数
+  const pdfRemoveSuccess = (file, fileList) => {
+    let removeFile = {path: file.name}
+    proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
+      if(resp.code !== 200){
+        ElMessage.error('Unable to delete PDF')
+      }
+    })
   }
 
 

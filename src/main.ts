@@ -32,7 +32,7 @@ const baseUrl = 'https://localhost:7700/fair-api';
 app.config.globalProperties.$baseUrl = baseUrl; //设置全局变量$baseUrl
 
 //Minio服务器地址
-const minioUrl = 'http://localhost:9000/fair';
+const minioUrl = 'http://43.153.8.245:9000/fair';
 app.config.globalProperties.$minioUrl = minioUrl;
 
 import localStorageUtil from "./utils/localStorageUtil.ts";
