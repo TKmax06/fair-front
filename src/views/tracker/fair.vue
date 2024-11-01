@@ -163,7 +163,7 @@
               accept=".pdf" :before-upload="pdfBeforeUpload"
               :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
               :on-remove="pdfRemoveSuccess" :before-remove="pdfBeforeRemove"
-              limit="3"
+              :limit="3"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
@@ -411,6 +411,11 @@
   //校验上传文件大小(< 1M)
   const pdfBeforeUpload = (file) => {
     let size = file.size / 1024 / 1024;
+
+    if(file.type.trim() === "" || file.type.toLowerCase() !== "application/pdf"){
+      ElMessage.error('Only pdf is allowed')
+      return false;
+    }
 
     if(size > 1){
       ElMessage.error('PDF size cannot exceed 1M')

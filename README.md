@@ -14,6 +14,7 @@ Main tracker:
 ② Eng只能修改Reason
 ③ Planner email: add both name and email
 ④ 下载和删除pdf
+⑤ 允许Eng添加多个Deviation # 和 Deviation QTY
 
 用户列表地址：
 https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0QCPo/edit?gid=0#gid=0
