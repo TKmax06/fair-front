@@ -148,10 +148,10 @@
           <el-row :gutter="10" class="item-row"
                   v-for="(one, $index) in dialog.dataForm.item" :key="$index">
             <el-col :span="10">
-              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" @change="handleDeviation($index, $event)"/>
+              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="10">
-              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" @change="handleDeviation($index, $event)"/>
+              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="1">
               <el-button type="primary" :icon="Delete" @click="deleteItem($index)" />
@@ -159,7 +159,7 @@
           </el-row>
         </el-form-item>
 
-        <el-form-item label="Deviation Dropbox" prop="devbox" label-position="left">
+        <el-form-item label="Deviation Dropbox" label-position="left" prop="devbox">
           <el-upload
               class="upload-pdf"
               drag
@@ -250,6 +250,14 @@
 
   const {proxy} = getCurrentInstance();
 
+  //校验Deviation Dropbox
+  const uploadFileChange = (rule, value, callback) => {
+    if(dialog.upload.files.length === 0){
+      return callback("Deviation Dropbox cannot be empty!");
+    }
+    return true;
+  }
+
   //过滤控件变量
   const dataForm = reactive({
     dates: null
@@ -267,7 +275,10 @@
       customerList: [],
       plannerList: [],
       engname: null,
-      item: [{}], //deviation
+      item: [{
+        number: "",
+        qty:""
+      }], //deviation
       reason: null,
       planneremail: null,
       fairtype: null,
@@ -298,7 +309,7 @@
       ],
       customer: [{required: true, message: 'Customer cannot be empty!'}],
       engname: [{required: true, message: 'Eng name cannot be empty!'}],
-      devbox: [{required: true, message: 'Deviation Dropbox cannot be empty!'}],
+      devbox: [{required: true, validator:uploadFileChange, trigger: 'change'}],
       reason: [{required: true, message: 'Reason cannot be empty!'}],
       planneremail: [{required: true, message: 'Planner email cannot be empty!'}],
       fairtype: [{required: true, message: 'Fair type cannot be empty!'}]
@@ -355,9 +366,11 @@
       return { backgroundColor: '#5f94e0', color:'black' };
     }else if (columnIndex === 2 && column.label !== "CLS PN"){
       return { backgroundColor: '#e1deff', color:'black' };
-    }
-    else if (columnIndex === 3 && column.label !== "Revision"){
+    } else if (columnIndex === 3 && column.label !== "Revision"){
       return { backgroundColor: '#34ba97', color:'black' };
+    }
+    else if (column.label === "Action"){
+      return { backgroundColor: '#fea802', color:'black' };
     }
   }
 
@@ -369,10 +382,7 @@
     //清空上传文件列表
     dialog.upload.files = [];
     //清空deviation
-    dialog.dataForm.item = [{
-      number: "N/A",
-      qty: "N/A"
-    }]
+    dialog.dataForm.item = [{}]
     dialog.update = false;
     //get customer list
     getList("customer");
@@ -447,6 +457,8 @@
       dialog.dataForm.pdf = path;
       //上传控件中显示已上传的文件
       dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
+      //移除校验规则
+      proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
     }
   }
 
@@ -475,17 +487,47 @@
   //添加体检内容
   const addItem = () => {
     //这里添加一个空的JSON对象，目的是添加后下拉列表没有默认选中项，文本框都是空的
-    dialog.dataForm.item.push({
-      number: "N/A",
-      qty: "N/A"
-    });
+    dialog.dataForm.item.push({});
   }
 
-  const handleDeviation = (index, newValue:string) => {
-    if(newValue === "" || String(newValue).trim() === ""){
+  //设置默认值为N/A
+  const handleDeviation = (index, event) => {
+    if(String(event.target.value).trim() === ""){
       dialog.dataForm.item[index].number = "N/A";
       dialog.dataForm.item[index].qty = "N/A";
     }
+  }
+
+  //根据索引删除deviation
+  const deleteItem = (index) => {
+    if(dialog.dataForm.item.length == 1){
+      ElMessage.error('At least one deviation is required')
+    }else{
+      dialog.dataForm.item.splice(index, 1);
+    }
+  }
+
+  //发送Ajax添加Fair
+  const dataFormSubmit = () => {
+    for (let d of dialog.dataForm.item){
+      if(d.number == undefined || d.number == ""){
+        d.number = "N/A";
+      }
+      if(d.qty == undefined || d.qty == ""){
+        d.qty = "N/A";
+      }
+    }
+
+    //发送请求
+    proxy.$refs['dialogForm'].validate(valid => {
+      if(valid){
+        const addJson = {
+
+        }
+      }else{
+        ElMessage.error('Data validation failed')
+      }
+    })
   }
 
 
