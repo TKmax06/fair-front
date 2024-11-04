@@ -143,14 +143,20 @@
           <el-input v-model="dialog.dataForm.engname"/>
         </el-form-item>
 
-        <el-form-item label="Deviation #" prop="devnumber" label-position="left">
-          <el-input v-model="dialog.dataForm.devnumber"
-                    maxlength="10" clearable />
-        </el-form-item>
-
-        <el-form-item label="Deviation QTY" prop="devqty" label-position="left">
-          <el-input v-model="dialog.dataForm.devqty"
-                    maxlength="10" clearable />
+        <el-form-item label="Deviation" label-position="left" class="is-required">
+          <!-- :gutter="10" 列间距为10px -->
+          <el-row :gutter="10" class="item-row"
+                  v-for="(one, $index) in dialog.dataForm.item" :key="$index">
+            <el-col :span="10">
+              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" @change="handleDeviation($index, $event)"/>
+            </el-col>
+            <el-col :span="10">
+              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" @change="handleDeviation($index, $event)"/>
+            </el-col>
+            <el-col :span="1">
+              <el-button type="primary" :icon="Delete" @click="deleteItem($index)" />
+            </el-col>
+          </el-row>
         </el-form-item>
 
         <el-form-item label="Deviation Dropbox" prop="devbox" label-position="left">
@@ -159,6 +165,7 @@
               drag
               :action="dialog.upload.action"
               :headers="dialog.upload.headers"
+              v-model:file-list="dialog.upload.files"
               :data="dialog.upload.data" :show-file-list="true"
               accept=".pdf" :before-upload="pdfBeforeUpload"
               :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
@@ -198,10 +205,10 @@
 
         <el-form-item label="Fair Type" prop="fairtype" label-position="left">
           <el-select v-model="dialog.dataForm.fairtype">
-            <el-option label="Full" value="Full"/>
-            <el-option label="Partial" value="Partial" />
             <el-option label="Delta" value="Delta" />
+            <el-option label="Full" value="Full"/>
             <el-option label="Full by similarity" value="Full by similarity" />
+            <el-option label="Partial" value="Partial" />
           </el-select>
         </el-form-item>
 
@@ -210,8 +217,9 @@
       <!-- 弹窗页脚 -->
       <template #footer>
       <span class="dialog-footer">
+        <el-button type="danger" @click="addItem">Add Deviation</el-button>
         <el-button @click="dialog.visible = false">Cancel</el-button>
-        <el-button type="primary" @click="dataFormSubmit">{{!dialog.dataForm.id ? 'Add' : 'Edit'}}</el-button>
+        <el-button type="primary" @click="dataFormSubmit">{{!dialog.dataForm.id ? 'Save' : 'Edit'}}</el-button>
       </span>
       </template>
     </el-dialog>
@@ -234,8 +242,9 @@
   import {reactive, getCurrentInstance, onMounted} from "vue";
   import {dayjs, ElMessage, UploadFile, UploadFiles} from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
-  import { UploadFilled } from '@element-plus/icons-vue'
+  import { UploadFilled, Delete } from '@element-plus/icons-vue'
   import localStorageUtil from "@/utils/localStorageUtil.ts";
+  import {string} from "fast-glob/out/utils";
 
   let {flexWidth} = f;
 
@@ -258,8 +267,7 @@
       customerList: [],
       plannerList: [],
       engname: null,
-      devnumber: "N/A",
-      devqty: "N/A",
+      item: [{}], //deviation
       reason: null,
       planneremail: null,
       fairtype: null,
@@ -274,6 +282,7 @@
       headers: {//请求头带令牌
         token: localStorageUtil.get('token'),
       },
+      files:[], //上传文件列表
       data: {
         id: null
       }
@@ -289,8 +298,6 @@
       ],
       customer: [{required: true, message: 'Customer cannot be empty!'}],
       engname: [{required: true, message: 'Eng name cannot be empty!'}],
-      devnumber: [{required: true, message: 'Deviation # cannot be empty!'}],
-      devqty: [{required: true, message: 'Deviation QTY cannot be empty!'}],
       devbox: [{required: true, message: 'Deviation Dropbox cannot be empty!'}],
       reason: [{required: true, message: 'Reason cannot be empty!'}],
       planneremail: [{required: true, message: 'Planner email cannot be empty!'}],
@@ -343,7 +350,6 @@
 
   const headerCellStyle = ({row, column, rowIndex, columnIndex}) => {
     if(columnIndex === 0 && column.label !== "#"){
-      console.log(column.label)
       return { backgroundColor: '#f56c6c', color:'black' };
     }else if (columnIndex === 1 && column.label !== "Date"){
       return { backgroundColor: '#5f94e0', color:'black' };
@@ -360,6 +366,13 @@
     dialog.dataForm.id = null;
     dialog.dataForm.customerList = [];
     dialog.dataForm.plannerList = [];
+    //清空上传文件列表
+    dialog.upload.files = [];
+    //清空deviation
+    dialog.dataForm.item = [{
+      number: "N/A",
+      qty: "N/A"
+    }]
     dialog.update = false;
     //get customer list
     getList("customer");
@@ -369,6 +382,7 @@
     proxy.$nextTick(()=>{//确保DOM更新后执行操作
       proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
     })
+    console.log("上传文件列表 => ", dialog.upload.files[0].name)
   }
 
   const getList = (name) => {
@@ -455,6 +469,23 @@
         ElMessage.error('Unable to delete PDF')
       }
     })
+  }
+
+  //添加Deviation
+  //添加体检内容
+  const addItem = () => {
+    //这里添加一个空的JSON对象，目的是添加后下拉列表没有默认选中项，文本框都是空的
+    dialog.dataForm.item.push({
+      number: "N/A",
+      qty: "N/A"
+    });
+  }
+
+  const handleDeviation = (index, newValue:string) => {
+    if(newValue === "" || String(newValue).trim() === ""){
+      dialog.dataForm.item[index].number = "N/A";
+      dialog.dataForm.item[index].qty = "N/A";
+    }
   }
 
 
