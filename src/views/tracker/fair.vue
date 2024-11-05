@@ -148,10 +148,10 @@
           <el-row :gutter="10" class="item-row"
                   v-for="(one, $index) in dialog.dataForm.item" :key="$index">
             <el-col :span="10">
-              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" @blur="handleDeviation($index, $event)"/>
+              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" clearable @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="10">
-              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" @blur="handleDeviation($index, $event)"/>
+              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" clearable @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="1">
               <el-button type="primary" :icon="Delete" @click="deleteItem($index)" />
@@ -244,7 +244,6 @@
   import f from "@/utils/tableWidthUtil.ts";
   import { UploadFilled, Delete } from '@element-plus/icons-vue'
   import localStorageUtil from "@/utils/localStorageUtil.ts";
-  import {string} from "fast-glob/out/utils";
 
   let {flexWidth} = f;
 
@@ -282,7 +281,7 @@
       reason: null,
       planneremail: null,
       fairtype: null,
-      pdf: null,
+      pdf: [],
       pdfUrl: null
     },
 
@@ -379,6 +378,7 @@
     dialog.dataForm.id = null;
     dialog.dataForm.customerList = [];
     dialog.dataForm.plannerList = [];
+    dialog.dataForm.pdf = [];
     //清空上传文件列表
     dialog.upload.files = [];
     //清空deviation
@@ -395,6 +395,7 @@
     console.log("上传文件列表 => ", dialog.upload.files[0].name)
   }
 
+  //获取customer和planner列表
   const getList = (name) => {
     if(name === "customer"){
       proxy.$http("/customer/query-customer", "GET", null, true, resp => {
@@ -446,6 +447,15 @@
       return false;
     }
 
+    let fileName = file.name;
+
+    for (let f of dialog.upload.files) {
+      if (f.name === fileName){
+        ElMessage.error(`${fileName} already uploaded!`);
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -454,8 +464,8 @@
     if(resp.code === 200){
       let path = resp.result;
       //保存图片相对地址，添加或者修改商品的时候，要上传给后端web方法
-      dialog.dataForm.pdf = path;
-      //上传控件中显示已上传的文件
+      dialog.dataForm.pdf.push(path);
+      //上传控件中显示已上传的文件(完整路径)
       dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
       //移除校验规则
       proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
@@ -464,7 +474,7 @@
 
   //上传文件失败回调函数
   const pdfUploadError = (e) => {
-    ElMessage.error('Unable to upload PDF')
+    ElMessage.error('Unable to upload the file')
     console.error(e)
   }
 
@@ -475,12 +485,17 @@
 
   //删除文件成功回调函数
   const pdfRemoveSuccess = (file, fileList) => {
-    let removeFile = {path: file.name}
-    proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
-      if(resp.code !== 200){
-        ElMessage.error('Unable to delete PDF')
-      }
-    })
+    //如果上传重复的文件会触发before-upload，此时file.status是ready，而before-upload之后又会触发该事件，从而导致文件被删除
+    //而上传成功的回调执行该方法返回的file.status是success，所以我们必须保证文件上传成功后才能触发此方法
+    if(file && file.status === "success"){
+      let removeFile = {path: file.name}
+      proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
+        if(resp.code !== 200){
+          ElMessage.error('Unable to delete PDF')
+        }
+      })
+    }
+
   }
 
   //添加Deviation
