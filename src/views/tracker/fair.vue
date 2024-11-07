@@ -3,11 +3,11 @@
     <!-- 搜索区域
 		  inline="true": 控件水平排成一行
 	  -->
-    <el-form :inline="true" :model="dataForm" :rules="dataRule" ref="form">
+    <el-form :inline="true" :model="data" ref="form">
 
       <el-form-item label="Date">
         <el-date-picker
-            v-model="dataForm.dates"
+            v-model="filter.dates"
             type="daterange" range-separator="To"
             start-placeholder="Start date"
             end-placeholder="End date"
@@ -44,23 +44,22 @@
               比如假设每页显示10条记录，那么第二页第一条记录在数组中的索引为0，即scope.$index=0
               那么该条记录经过计算后显示的索引为 (2-1)*10+0+1=11
             -->
-            <span>{{ (data.pageIndex - 1) * data.pageSize + scope.$index + 1}}</span>
+            <span>{{ (filter.pageIndex - 1) * filter.pageSize + scope.$index + 1}}</span>
           </template>
         </el-table-column>
         <!-- prop：注意后端返回的json对象的属性名必须和这里的prop对应才能回显数据 -->
-        <el-table-column prop="date" header-align="center" align="center" label="Date" sortable :min-width="flexWidth('date', data.dataList, 'Date')"/>
-        <el-table-column prop="clspn" header-align="center" align="center" label="CLS PN" :min-width="flexWidth('clspn', data.dataList, 'CLS PN')"/>
+        <el-table-column prop="createDate" header-align="center" align="center" label="Date" sortable :min-width="flexWidth('date', data.dataList, 'Date')"/>
+        <el-table-column prop="clsPn" header-align="center" align="center" label="CLS PN" :min-width="flexWidth('clspn', data.dataList, 'CLS PN')"/>
         <el-table-column prop="revision" header-align="center" align="center" label="Revision" :min-width="flexWidth('revision', data.dataList, 'Revision')"/>
         <!-- :show-overflow-tooltip：文字有缩略效果 -->
         <el-table-column prop="customer" header-align="center" align="center" label="Customer" :min-width="flexWidth('customer', data.dataList, 'Customer')"/>
-        <el-table-column prop="engname" header-align="center" align="center" label="Eng Name" :min-width="flexWidth('engname', data.dataList, 'Eng Name')"/>
-        <el-table-column prop="devnumber" header-align="center" align="center" label="Deviation #" :min-width="flexWidth('devnumber', data.dataList, 'Deviation #')"/>
-        <el-table-column prop="devqty" header-align="center" align="center" label="Deviation QTY" :min-width="flexWidth('devqty', data.dataList, 'Deviation QTY')"/>
-        <el-table-column prop="devbox" header-align="center" align="center" label="Deviation Dropbox" :min-width="flexWidth('devbox', data.dataList, 'Deviation Dropbox')"/>
+        <el-table-column prop="engName" header-align="center" align="center" label="Eng Name" :min-width="flexWidth('engname', data.dataList, 'Eng Name')"/>
+        <el-table-column prop="deviation" header-align="center" align="center" label="Deviation Info" :min-width="flexWidth('devnumber', data.dataList, 'Deviation Info')"/>
+        <el-table-column prop="deviationFile" header-align="center" align="center" label="Deviation Dropbox" :min-width="flexWidth('devbox', data.dataList, 'Deviation Dropbox')"/>
         <el-table-column prop="reason" header-align="center" align="center" label="Reason"
                          :show-overflow-tooltip="true" :min-width="flexWidth('reason', data.dataList, 'Reason')"/>
-        <el-table-column prop="planneremail" header-align="center" align="center" label="Planner Email" :min-width="flexWidth('planneremail', data.dataList, 'Planner Email')"/>
-        <el-table-column prop="fairtype" header-align="center" align="center" label="Fair Type" :min-width="flexWidth('fairtype', data.dataList, 'Fair Type')"/>
+        <el-table-column prop="planner" header-align="center" align="center" label="Planner" :min-width="flexWidth('Planner', data.dataList, 'Planner and their information')"/>
+        <el-table-column prop="fairType" header-align="center" align="center" label="Fair Type" :min-width="flexWidth('fairtype', data.dataList, 'Fair Type')"/>
       </el-table-column>
 
       <el-table-column label="Planner" header-align="center" align="center">
@@ -119,8 +118,8 @@
       <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
 
         <!-- prop="username": 绑定 dialog.dataForm 中 username 的验证规则，并应用到文本框上-->
-        <el-form-item label="CLS PN" prop="clspn" label-position="left">
-          <el-input v-model="dialog.dataForm.clspn"
+        <el-form-item label="CLS PN" prop="clsPn" label-position="left">
+          <el-input v-model="dialog.dataForm.clsPn"
                     maxlength="20" clearable @change="autoFillCustomer"/>
         </el-form-item>
 
@@ -134,8 +133,8 @@
           <el-input v-model="dialog.dataForm.customer" disabled/>
         </el-form-item>
 
-        <el-form-item label="Eng Name" prop="engname" label-position="left">
-          <el-input v-model="dialog.dataForm.engname"/>
+        <el-form-item label="Eng Name" prop="engName" label-position="left">
+          <el-input v-model="dialog.dataForm.engName"/>
         </el-form-item>
 
         <el-form-item label="Deviation" label-position="left" class="is-required">
@@ -191,15 +190,15 @@
         </el-form-item>
 
         <!-- dropdown list -->
-        <el-form-item label="Planner Email" prop="planneremail" label-position="left">
-          <el-select v-model="dialog.dataForm.planneremail" placeholder="Select planner">
+        <el-form-item label="Planner" prop="planner" label-position="left">
+          <el-select v-model="dialog.dataForm.planner" placeholder="Select planner">
             <el-option v-for="p in dialog.dataForm.plannerList" :label="p.email"
-                       :value="p.id" :key="p.id" />
+                       :value="p.email" :key="p.id" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Fair Type" prop="fairtype" label-position="left">
-          <el-select v-model="dialog.dataForm.fairtype">
+        <el-form-item label="Fair Type" prop="fairType" label-position="left">
+          <el-select v-model="dialog.dataForm.fairType">
             <el-option label="Delta" value="Delta" />
             <el-option label="Full" value="Full"/>
             <el-option label="Full by similarity" value="Full by similarity" />
@@ -223,9 +222,9 @@
 
     <!-- 分页控件 -->
     <el-pagination @size-change="sizeChangeHandle"
-                   @current-change="currentChangeHandle" :current-page="data.pageIndex"
-                   :page-sizes="[10, 20, 50]" :page-size="data.pageSize"
-                   :total="data.totalCount"
+                   @current-change="currentChangeHandle" v-model:current-page="filter.pageIndex"
+                   :page-sizes="[10, 20, 50]" v-model:page-size="filter.pageSize"
+                   :total="filter.totalCount"
                    layout="total, sizes, prev, pager, next, jumper">
     </el-pagination>
 
@@ -234,313 +233,330 @@
 
 <script setup lang="ts">
 
-import {reactive, getCurrentInstance, onMounted} from "vue";
-import {dayjs, ElMessage, UploadFile, UploadFiles} from "element-plus";
-import f from "@/utils/tableWidthUtil.ts";
-import { UploadFilled, Delete } from '@element-plus/icons-vue'
-import localStorageUtil from "@/utils/localStorageUtil.ts";
+  import {reactive, getCurrentInstance, onMounted} from "vue";
+  import {dayjs, ElMessage, UploadFile, UploadFiles, ElMessageBox} from "element-plus";
+  import f from "@/utils/tableWidthUtil.ts";
+  import { UploadFilled, Delete } from '@element-plus/icons-vue'
+  import localStorageUtil from "@/utils/localStorageUtil.ts";
 
-let {flexWidth} = f;
+  let {flexWidth} = f;
 
-const {proxy} = getCurrentInstance();
+  const {proxy} = getCurrentInstance();
 
-//校验Deviation Dropbox
-const uploadFileChange = (rule, value, callback) => {
-  if(dialog.upload.files.length === 0){
-    return callback("Deviation Dropbox cannot be empty!");
-  }
-  return true;
-}
-
-//过滤控件变量
-const dataForm = reactive({
-  dates: null
-})
-
-//弹窗控件变量
-const dialog = reactive({
-  visible: false, //是否显示弹窗，调试完成后记得改为false
-  update: false,
-  dataForm: {
-    id: null, //Fair主键
-    clspn: null,
-    revision: null,
-    customer: null,
-    customerList: [],
-    plannerList: [],
-    engname: null,
-    item: [{
-      number: "",
-      qty:""
-    }], //deviation
-    reason: null,
-    planneremail: null,
-    fairtype: null,
-    pdf: [], //文件保存在minio服务器的相对路径
-    pdfUrl: null
-  },
-
-  //上传PDF
-  upload: {
-    //上传对应方法
-    action: `${proxy.$baseUrl}/file/uploadPDF`,
-    headers: {//请求头带令牌
-      token: localStorageUtil.get('token'),
-    },
-    files:[], //上传文件列表
-    data: {
-      id: null
+  //校验Deviation Dropbox
+  const uploadFileChange = (rule, value, callback) => {
+    if(dialog.upload.files.length === 0){
+      return callback("Deviation Dropbox cannot be empty!");
     }
-  },
-
-  //数据校验
-  dataRule: {
-    clspn: [
-      {required: true, message: 'PN cannot be empty!'}
-    ],
-    revision: [
-      {required: true, message: 'Revision cannot be empty!'}
-    ],
-    customer: [{required: true, message: 'Customer cannot be empty!'}],
-    engname: [{required: true, message: 'Eng name cannot be empty!'}],
-    devbox: [{required: true, validator:uploadFileChange, trigger: 'change'}],
-    reason: [{required: true, message: 'Reason cannot be empty!'}],
-    planneremail: [{required: true, message: 'Planner email cannot be empty!'}],
-    fairtype: [{required: true, message: 'Fair type cannot be empty!'}]
+    return true;
   }
 
-})
-
-const searchHandle = () => {
-  console.log(dataForm.dates);
-}
-
-const data = reactive({
-  dataList:[
-    {
-      date: "2024-10-12",
-      clspn: "1596516-1UF*",
-      revision: "AA",
-      customer: "COV/NPI",
-      engname: "Mazin Mahdi",
-      devnumber: "11111",
-      deviationbox: "N/A",
-      devqty: 10,
-      devbox: "fair.pdf",
-      reason: "year lapse in build (CL): Previous FAIR was included on top CCA 1596516-1UF in 2013 in PDF format.\t" +
-          "Multimeter is replaced with FLYING PROBE test.MOC P-45141-06",
-      planneremail: "nishap@celestica.com",
-      fairtype: "Full"
-    },
-    {
-      date: "2024-10-15",
-      clspn: "1596516-2UF*",
-      revision: "BB",
-      customer: "HUMS",
-      engname: "Sreekumar Narayanapillai",
-      devnumber: "22222",
-      deviationbox: "N/A",
-      devqty: 15,
-      devbox: "fair123.pdf",
-      reason: "Changing the suffix UF to UFC.Adding inhouse coating and final mechanical",
-      planneremail: "tyounus@celestica.com",
-      fairtype: "Partial"
-    }
-  ],
-  pageIndex: 1, //当前页码
-  pageSize: 10, //每页记录数
-  totalCount: 0, //总记录数
-  loading: false, //不显示加载进度条
-})
-
-const headerCellStyle = ({row, column, rowIndex, columnIndex}) => {
-  if(columnIndex === 0 && column.label !== "#"){
-    return { backgroundColor: '#f56c6c', color:'black' };
-  }else if (columnIndex === 1 && column.label !== "Date"){
-    return { backgroundColor: '#5f94e0', color:'black' };
-  }else if (columnIndex === 2 && column.label !== "CLS PN"){
-    return { backgroundColor: '#e1deff', color:'black' };
-  } else if (columnIndex === 3 && column.label !== "Revision"){
-    return { backgroundColor: '#34ba97', color:'black' };
-  }
-  else if (column.label === "Action"){
-    return { backgroundColor: '#fea802', color:'black' };
-  }
-}
-
-//新增按钮点击事件
-const addHandle = () => {
-  dialog.dataForm.id = null;
-  dialog.dataForm.customerList = [];
-  dialog.dataForm.plannerList = [];
-  dialog.dataForm.pdf = [];
-  //清空上传文件列表
-  dialog.upload.files = [];
-  //清空deviation
-  dialog.dataForm.item = [{}]
-  dialog.update = false;
-  //get customer list
-  getList("customer");
-  //get planner list
-  getList("planner");
-  dialog.visible = true; //显示弹窗
-  proxy.$nextTick(()=>{//确保DOM更新后执行操作
-    proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
+  //过滤控件变量
+  const filter = reactive({
+    dates: null,
+    pageIndex: 1, //当前页码
+    pageSize: 10, //每页记录数
+    totalCount: 0, //总记录数
   })
-  console.log("上传文件列表 => ", dialog.upload.files[0].name)
-}
 
-//获取customer和planner列表
-const getList = (name) => {
-  if(name === "customer"){
-    proxy.$http("/customer/query-customer", "GET", null, true, resp => {
+  //弹窗控件变量 (ENG)
+  const dialog = reactive({
+    visible: false, //是否显示弹窗，调试完成后记得改为false
+    update: false,
+    dataForm: {
+      id: null, //Fair主键
+      clsPn: null,
+      revision: null,
+      customer: null,
+      customerList: [],
+      plannerList: [],
+      engName: null,
+      item: [{
+        number: "",
+        qty:""
+      }], //deviation
+      reason: null,
+      planner: null,
+      fairType: null,
+      deviationFile: [], //文件保存在minio服务器的相对路径
+      pdfUrl: null
+    },
+
+    //上传PDF
+    upload: {
+      //上传对应方法
+      action: `${proxy.$baseUrl}/file/uploadPDF`,
+      headers: {//请求头带令牌
+        token: localStorageUtil.get('token'),
+      },
+      files:[], //上传文件列表
+      data: {
+        id: null
+      }
+    },
+
+    //数据校验
+    dataRule: {
+      clsPn: [
+        {required: true, message: 'PN cannot be empty!'}
+      ],
+      revision: [
+        {required: true, message: 'Revision cannot be empty!'}
+      ],
+      customer: [{required: true, message: 'Customer cannot be empty!'}],
+      engName: [{required: true, message: 'Eng name cannot be empty!'}],
+      devbox: [{required: true, validator:uploadFileChange, trigger: 'change'}],
+      reason: [{required: true, message: 'Reason cannot be empty!'}],
+      planner: [{required: true, message: 'Planner cannot be empty!'}],
+      fairType: [{required: true, message: 'Fair type cannot be empty!'}]
+    }
+
+  })
+
+  const searchHandle = () => {
+    loadDataList();
+  }
+
+  const data = reactive({
+    dataList:[],
+    loading: false, //不显示加载进度条
+  })
+
+  //分页查询
+  const loadDataList = () => {
+    data.loading = true; //显示加载进度条
+    proxy.$http("/tracker/searchByPage", "POST", filter, true, resp => {
       if(resp.code === 200){
-        dialog.dataForm.customerList = resp.result;
+        data.dataList = resp.list;
+        filter.totalCount =resp.totalCount; //总记录数
+        data.loading = false; //关闭加载进度条
       }else{
-        ElMessage.error('Unable to get the customer list')
+        ElMessage.error('Unable to load the fair data')
       }
     })
   }
 
-  if(name === "planner"){
-    proxy.$http("/planner/query-planner", "GET", null, true, resp => {
-      if(resp.code === 200){
-        dialog.dataForm.plannerList = resp.result;
-      }else{
-        ElMessage.error('Unable to get the planner list')
-      }
+  loadDataList();
+
+  const sizeChangeHandle = () => {
+    loadDataList();
+  }
+
+  const currentChangeHandle = () => {
+    loadDataList();
+  }
+
+
+  const headerCellStyle = ({row, column, rowIndex, columnIndex}) => {
+    if(columnIndex === 0 && column.label !== "#"){
+      return { backgroundColor: '#f56c6c', color:'black' };
+    }else if (columnIndex === 1 && column.label !== "Date"){
+      return { backgroundColor: '#5f94e0', color:'black' };
+    }else if (columnIndex === 2 && column.label !== "CLS PN"){
+      return { backgroundColor: '#e1deff', color:'black' };
+    } else if (columnIndex === 3 && column.label !== "Revision"){
+      return { backgroundColor: '#34ba97', color:'black' };
+    }
+    else if (column.label === "Action"){
+      return { backgroundColor: '#fea802', color:'black' };
+    }
+  }
+
+
+
+  //新增按钮点击事件
+  const addHandle = () => {
+    dialog.dataForm.id = null;
+    dialog.dataForm.customerList = [];
+    dialog.dataForm.plannerList = [];
+    dialog.dataForm.deviationFile = [];
+    //清空上传文件列表
+    dialog.upload.files = [];
+    //清空deviation
+    dialog.dataForm.item = [{}]
+    dialog.update = false;
+    //get customer list
+    getList("customer");
+    //get planner list
+    getList("planner");
+    dialog.visible = true; //显示弹窗
+    proxy.$nextTick(()=>{//确保DOM更新后执行操作
+      proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
     })
   }
-}
 
-const autoFillCustomer = (val) => {
-  dialog.dataForm.clspn = val.toUpperCase().trim();
-  let pnSuffix = dialog.dataForm.clspn?.slice(-3);
-  let suffixList = dialog.dataForm.customerList;
-  let match = suffixList.filter( c => c.suffix === pnSuffix)[0];
-  if(match == undefined){
-    dialog.dataForm.customer = null;
-    ElMessage.error('Unable to find the customer for this PN!')
-    return;
+  //获取customer和planner列表
+  const getList = (name) => {
+    if(name === "customer"){
+      proxy.$http("/customer/query-customer", "GET", null, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.customerList = resp.result;
+        }else{
+          ElMessage.error('Unable to get the customer list')
+        }
+      })
+    }
+
+    if(name === "planner"){
+      proxy.$http("/planner/query-planner", "GET", null, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.plannerList = resp.result;
+        }else{
+          ElMessage.error('Unable to get the planner list')
+        }
+      })
+    }
   }
 
-  dialog.dataForm.customer = match.customer;
+  const autoFillCustomer = (val) => {
+    dialog.dataForm.clspn = val.toUpperCase().trim();
+    let pnSuffix = dialog.dataForm.clspn?.slice(-3);
+    let suffixList = dialog.dataForm.customerList;
+    let match = suffixList.filter( c => c.suffix === pnSuffix)[0];
+    if(match == undefined){
+      dialog.dataForm.customer = null;
+      ElMessage.error('Unable to find the customer for this PN!')
+      return;
+    }
 
-}
+    dialog.dataForm.customer = match.customer;
 
-//校验上传文件大小(< 1M)
-const pdfBeforeUpload = (file) => {
-  let size = file.size / 1024 / 1024;
-
-  if(file.type.trim() === "" || file.type.toLowerCase() !== "application/pdf"){
-    ElMessage.error('Only pdf is allowed')
-    return false;
   }
 
-  if(size > 1){
-    ElMessage.error('PDF size cannot exceed 1M')
-    return false;
-  }
+  //校验上传文件大小(< 1M)
+  const pdfBeforeUpload = (file) => {
+    let size = file.size / 1024 / 1024;
 
-  let fileName = file.name;
-
-  for (let f of dialog.upload.files) {
-    if (f.name === fileName){
-      ElMessage.error(`${fileName} already uploaded!`);
+    if(file.type.trim() === "" || file.type.toLowerCase() !== "application/pdf"){
+      ElMessage.error('Only pdf is allowed')
       return false;
     }
-  }
 
-  return true;
-}
-
-//上传文件成功回调函数
-const pdfUploadSuccess = (resp : any, uploadFile : UploadFile, uploadFiles :  UploadFiles) => {
-  if(resp.code === 200){
-    let path = resp.result;
-    //保存文件相对地址，添加或者修改文件的时候，要上传给后端web方法
-    dialog.dataForm.pdf.push(path);
-    //上传控件中显示已上传的文件(完整路径)
-    dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
-    //移除校验规则
-    proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
-  }
-}
-
-//上传文件失败回调函数
-const pdfUploadError = (e) => {
-  ElMessage.error('Unable to upload the file')
-  console.error(e)
-}
-
-//删除文件之前的回调函数
-const pdfBeforeRemove = () => {
-
-}
-
-//删除文件成功回调函数
-const pdfRemoveSuccess = (file, fileList) => {
-  //如果上传重复的文件会触发before-upload，此时file.status是ready，而before-upload之后又会触发该事件，从而导致文件被删除
-  //而上传成功的回调执行该方法返回的file.status是success，所以我们必须保证文件上传成功后才能触发此方法
-  if(file && file.status === "success"){
-    let filePath = dialog.dataForm.pdf.filter( f => f.includes(file.name))[0];
-    let removeFile = {path: filePath};
-    proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
-      if(resp.code !== 200){
-        ElMessage.error('Unable to delete PDF')
-      }
-    })
-  }
-
-}
-
-//添加Deviation
-//添加体检内容
-const addItem = () => {
-  //这里添加一个空的JSON对象，目的是添加后下拉列表没有默认选中项，文本框都是空的
-  dialog.dataForm.item.push({});
-}
-
-//设置默认值为N/A
-const handleDeviation = (index, event) => {
-  if(String(event.target.value).trim() === ""){
-    dialog.dataForm.item[index].number = "N/A";
-    dialog.dataForm.item[index].qty = "N/A";
-  }
-}
-
-//根据索引删除deviation
-const deleteItem = (index) => {
-  if(dialog.dataForm.item.length == 1){
-    ElMessage.error('At least one deviation is required')
-  }else{
-    dialog.dataForm.item.splice(index, 1);
-  }
-}
-
-//发送Ajax添加Fair
-const dataFormSubmit = () => {
-  for (let d of dialog.dataForm.item){
-    if(d.number == undefined || d.number == ""){
-      d.number = "N/A";
+    if(size > 1){
+      ElMessage.error('PDF size cannot exceed 1M')
+      return false;
     }
-    if(d.qty == undefined || d.qty == ""){
-      d.qty = "N/A";
+
+    let fileName = file.name;
+
+    for (let f of dialog.upload.files) {
+      if (f.name === fileName){
+        ElMessage.error(`${fileName} already uploaded!`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  //上传文件成功回调函数
+  const pdfUploadSuccess = (resp : any, uploadFile : UploadFile, uploadFiles :  UploadFiles) => {
+    if(resp.code === 200){
+      let path = resp.result;
+      //保存文件相对地址，添加或者修改文件的时候，要上传给后端web方法
+      dialog.dataForm.deviationFile.push(path);
+      //上传控件中显示已上传的文件(完整路径)
+      dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
+      //移除校验规则
+      proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
     }
   }
 
-  //发送请求
-  proxy.$refs['dialogForm'].validate(valid => {
-    if(valid){
-      const addJson = {
+  //上传文件失败回调函数
+  const pdfUploadError = (e) => {
+    ElMessage.error('Unable to upload the file')
+    console.error(e)
+  }
 
-      }
+  //删除文件之前的回调函数
+  const pdfBeforeRemove = () => {
+
+  }
+
+  //删除文件成功回调函数
+  const pdfRemoveSuccess = (file, fileList) => {
+    //如果上传重复的文件会触发before-upload，此时file.status是ready，而before-upload之后又会触发该事件，从而导致文件被删除
+    //而上传成功的回调执行该方法返回的file.status是success，所以我们必须保证文件上传成功后才能触发此方法
+    if(file && file.status === "success"){
+      let filePath = dialog.dataForm.deviationFile.filter( f => f.includes(file.name))[0];
+      let removeFile = {path: filePath};
+      proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
+        if(resp.code !== 200){
+          ElMessage.error('Unable to remove the file')
+        }
+      })
+    }
+
+  }
+
+  //添加Deviation
+  //添加体检内容
+  const addItem = () => {
+    //这里添加一个空的JSON对象，目的是添加后下拉列表没有默认选中项，文本框都是空的
+    dialog.dataForm.item.push({});
+  }
+
+  //设置默认值为N/A
+  const handleDeviation = (index, event) => {
+    if(String(event.target.value).trim() === ""){
+      dialog.dataForm.item[index].number = "N/A";
+      dialog.dataForm.item[index].qty = "N/A";
+    }
+  }
+
+  //根据索引删除deviation
+  const deleteItem = (index) => {
+    if(dialog.dataForm.item.length == 1){
+      ElMessage.error('At least one deviation is required')
     }else{
-      ElMessage.error('Data validation failed')
+      dialog.dataForm.item.splice(index, 1);
     }
-  })
-}
+  }
 
+  //发送Ajax添加Fair
+  const dataFormSubmit = () => {
+    for (let d of dialog.dataForm.item){
+      if(d.number == undefined || d.number == ""){
+        d.number = "N/A";
+      }
+      if(d.qty == undefined || d.qty == ""){
+        d.qty = "N/A";
+      }
+    }
+
+    ElMessageBox.confirm(
+        "Once a FAIR is added, only the reason can be modified. Are you sure to proceed?",
+        "Warning",
+        {
+          confirmButtonText: 'Proceed',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+          center: true,
+        }
+    ).then(() => {
+      //发送请求
+      proxy.$refs['dialogForm'].validate(valid => {
+        if(valid){
+          proxy.$http(`/tracker/${dialog.dataForm.id == null ? 'insert' : 'update'}`, "POST", dialog.dataForm, true, resp => {
+            if(resp.flag){
+              ElMessage.success("Fair added successfully")
+              dialog.visible = false;
+              loadDataList();
+            }else{
+              ElMessage.error("Unable to add the FAIR")
+            }
+
+          })
+        }else{
+          ElMessage.error('Data validation failed')
+        }
+      })
+
+    }).catch(() => {
+
+    })
+
+  }
 
 </script>
 

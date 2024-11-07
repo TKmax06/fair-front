@@ -16,6 +16,9 @@ Main tracker:
 ④ 下载和删除pdf
 ⑤ 允许Eng添加多个Deviation # 和 Deviation QTY (查看体检内容)
 
+可能出现的bug:
+如果在同一天，分别上传不同的Fair，但是PDF文件名相同，新的文件会覆盖旧的同名文件！
+
 用户列表地址：
 https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0QCPo/edit?gid=0#gid=0
 
