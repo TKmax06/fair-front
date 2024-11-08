@@ -106,6 +106,10 @@
                      @click="editHandle(scope.row.id)">
             Edit
           </el-button>
+          <el-button type="primary" link style="padding: 0;"
+                     @click="editDownload(scope.row.id)">
+            Download
+          </el-button>
         </template>
       </el-table-column>
 
@@ -223,7 +227,7 @@
     <!-- 分页控件 -->
     <el-pagination @size-change="sizeChangeHandle"
                    @current-change="currentChangeHandle" v-model:current-page="filter.pageIndex"
-                   :page-sizes="[10, 20, 50]" v-model:page-size="filter.pageSize"
+                   :page-sizes="[5, 10, 20, 50]" v-model:page-size="filter.pageSize"
                    :total="filter.totalCount"
                    layout="total, sizes, prev, pager, next, jumper">
     </el-pagination>
@@ -255,7 +259,7 @@
   const filter = reactive({
     dates: null,
     pageIndex: 1, //当前页码
-    pageSize: 10, //每页记录数
+    pageSize: 5, //每页记录数
     totalCount: 0, //总记录数
   })
 
@@ -329,16 +333,17 @@
       if(resp.code === 200){
         data.dataList = resp.list;
         filter.totalCount =resp.totalCount; //总记录数
-        data.loading = false; //关闭加载进度条
       }else{
         ElMessage.error('Unable to load the fair data')
       }
+      data.loading = false; //关闭加载进度条
     })
   }
 
   loadDataList();
 
   const sizeChangeHandle = () => {
+    filter.pageIndex = 1;
     loadDataList();
   }
 
@@ -481,7 +486,9 @@
       let filePath = dialog.dataForm.deviationFile.filter( f => f.includes(file.name))[0];
       let removeFile = {path: filePath};
       proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
-        if(resp.code !== 200){
+        if(resp.code === 200){
+          dialog.dataForm.deviationFile = dialog.dataForm.deviationFile.filter( f => !f.includes(file.name));
+        }else{
           ElMessage.error('Unable to remove the file')
         }
       })
@@ -555,6 +562,40 @@
     }).catch(() => {
 
     })
+
+  }
+
+  const editDownload = (id) => {
+    console.log("id => ", id);
+
+    ElMessage.info("Start downloading file...");
+
+    let token = localStorageUtil.get("token");
+
+    proxy.$http(`/file/countPDF?id=${id}&token=${token}`, "GET", null, true, resp => {
+      if(resp.code === 200){
+
+        for (let i = 0; i < resp.count; i++) {
+          let url = `${proxy.$baseUrl}/file/downloadPDF?id=${id}&count=${i}&token=${token}`;
+
+          //创建超链接对象
+          let eleIF  = document.createElement('iframe');
+          //设置超链接地址
+          eleIF.src = url;
+          eleIF.style.display = 'none';
+          document.body.appendChild(eleIF);
+          setTimeout(() => {
+            document.body.removeChild(eleIF)
+          }, 1000); // 1000 毫秒 = 1秒
+        }
+      }else{
+        ElMessage.error("Unable to download the file");
+      }
+
+    })
+
+    ElMessage.success("Downloading completed");
+
 
   }
 
