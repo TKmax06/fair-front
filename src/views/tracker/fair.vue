@@ -388,6 +388,7 @@
     proxy.$nextTick(()=>{//确保DOM更新后执行操作
       proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
     })
+
   }
 
   //获取customer和planner列表
@@ -566,7 +567,6 @@
   }
 
   const editDownload = (id) => {
-    console.log("id => ", id);
 
     ElMessage.info("Start downloading file...");
 
@@ -578,24 +578,29 @@
         for (let i = 0; i < resp.count; i++) {
           let url = `${proxy.$baseUrl}/file/downloadPDF?id=${id}&count=${i}&token=${token}`;
 
-          //创建超链接对象
-          let eleIF  = document.createElement('iframe');
-          //设置超链接地址
-          eleIF.src = url;
-          eleIF.style.display = 'none';
-          document.body.appendChild(eleIF);
-          setTimeout(() => {
-            document.body.removeChild(eleIF)
-          }, 1000); // 1000 毫秒 = 1秒
+          let timer = null;
+          try{
+            //创建超链接对象
+            let eleIF  = document.createElement('iframe');
+            //设置超链接地址
+            eleIF.src = url;
+            eleIF.style.display = 'none';
+            document.body.appendChild(eleIF);
+            timer = setTimeout(() => {
+              document.body.removeChild(eleIF)
+            }, 1000); // 1000 毫秒 = 1秒
+          }catch (e){
+            console.log(e);
+          }finally {
+            clearTimeout(timer);
+          }
+
         }
       }else{
         ElMessage.error("Unable to download the file");
       }
 
     })
-
-    ElMessage.success("Downloading completed");
-
 
   }
 
