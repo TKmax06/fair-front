@@ -28,6 +28,7 @@
           Add
         </el-button>
 
+
       </el-form-item>
 
     </el-form>
@@ -99,16 +100,19 @@
       </el-table-column>
 
       <!-- fixed="right": 列将被右侧固定 -->
-      <el-table-column header-align="center" align="center" width="100" label="Action" fixed="right">
+      <el-table-column header-align="center" align="left" width="147" label="Action" fixed="right">
         <template #default="scope">
-          <el-button type="primary" link style="padding: 0;"
-                     :disabled="!proxy.isAuth(['ADMIN', 'ENG'])"
+          <el-button type="primary" :disabled="proxy.isAuth(['Viewer'])"
+                     :icon="Edit" circle
                      @click="editHandle(scope.row.id)">
-            Edit
           </el-button>
-          <el-button type="primary" link style="padding: 0;"
+          <el-button type="danger"
+                     :icon="Delete" circle
+                     @click="deleteHandle(scope.row.id)">
+          </el-button>
+          <el-button type="success"
+                     :icon="Download" circle
                      @click="editDownload(scope.row.id)">
-            Download
           </el-button>
         </template>
       </el-table-column>
@@ -116,32 +120,32 @@
     </el-table>
 
     <!-- Add/Edit Fair(ENG) -->
-    <el-dialog v-model="dialog.visible" :title="!dialog.dataForm.id ? 'Add' : 'Edit'"
+    <el-dialog v-model="dialog.visible" :title="!dialog.update ? 'Add' : 'Edit'"
                :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['ENG'])">
 
       <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
 
         <!-- prop="username": 绑定 dialog.dataForm 中 username 的验证规则，并应用到文本框上-->
         <el-form-item label="CLS PN" prop="clsPn" label-position="left">
-          <el-input v-model="dialog.dataForm.clsPn"
+          <el-input v-model="dialog.dataForm.clsPn" :disabled="dialog.update"
                     maxlength="20" clearable @change="autoFillCustomer"/>
         </el-form-item>
 
-        <el-form-item label="Revision" prop="revision" label-position="left">
+        <el-form-item label="Revision" prop="revision" label-position="left" v-if="!dialog.update">
           <el-input v-model="dialog.dataForm.revision"
                     maxlength="5" clearable />
         </el-form-item>
 
         <!-- customer is auto filled based on the suffix of the CLS PN -->
-        <el-form-item label="Customer" prop="customer" label-position="left">
+        <el-form-item label="Customer" prop="customer" label-position="left" v-if="!dialog.update">
           <el-input v-model="dialog.dataForm.customer" disabled/>
         </el-form-item>
 
-        <el-form-item label="Eng Name" prop="engName" label-position="left">
+        <el-form-item label="Eng Name" prop="engName" label-position="left" v-if="!dialog.update">
           <el-input v-model="dialog.dataForm.engName"/>
         </el-form-item>
 
-        <el-form-item label="Deviation" label-position="left" class="is-required">
+        <el-form-item label="Deviation" label-position="left" class="is-required" v-if="!dialog.update">
           <!-- :gutter="10" 列间距为10px -->
           <el-row :gutter="10" class="item-row"
                   v-for="(one, $index) in dialog.dataForm.item" :key="$index">
@@ -157,7 +161,7 @@
           </el-row>
         </el-form-item>
 
-        <el-form-item label="Deviation Dropbox" label-position="left" prop="devbox">
+        <el-form-item label="Deviation Dropbox" label-position="left" prop="devbox" v-if="!dialog.update">
           <el-upload
               class="upload-pdf"
               drag
@@ -168,7 +172,7 @@
               accept=".pdf" :before-upload="pdfBeforeUpload"
               :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
               :on-remove="pdfRemoveSuccess" :before-remove="pdfBeforeRemove"
-              :limit="3"
+              :limit="10"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
@@ -176,7 +180,7 @@
             </div>
             <template #tip>
               <div class="el-upload__tip">
-                No more than 3 PDFs allowed to upload, each PDF file size less than 1MB
+                No more than 10 PDFs allowed to upload, each PDF file size less than 1MB
               </div>
             </template>
           </el-upload>
@@ -194,14 +198,14 @@
         </el-form-item>
 
         <!-- dropdown list -->
-        <el-form-item label="Planner" prop="planner" label-position="left">
+        <el-form-item label="Planner" prop="planner" label-position="left" v-if="!dialog.update">
           <el-select v-model="dialog.dataForm.planner" placeholder="Select planner">
             <el-option v-for="p in dialog.dataForm.plannerList" :label="p.email"
                        :value="p.email" :key="p.id" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Fair Type" prop="fairType" label-position="left">
+        <el-form-item label="Fair Type" prop="fairType" label-position="left" v-if="!dialog.update">
           <el-select v-model="dialog.dataForm.fairType">
             <el-option label="Delta" value="Delta" />
             <el-option label="Full" value="Full"/>
@@ -215,7 +219,7 @@
       <!-- 弹窗页脚 -->
       <template #footer>
       <span class="dialog-footer">
-        <el-button type="danger" @click="addItem">Add Deviation</el-button>
+        <el-button type="danger" @click="addItem" v-if="!dialog.update">Add Deviation</el-button>
         <el-button @click="dialog.visible = false">Cancel</el-button>
         <el-button type="primary" @click="dataFormSubmit">{{!dialog.dataForm.id ? 'Save' : 'Edit'}}</el-button>
       </span>
@@ -227,7 +231,7 @@
     <!-- 分页控件 -->
     <el-pagination @size-change="sizeChangeHandle"
                    @current-change="currentChangeHandle" v-model:current-page="filter.pageIndex"
-                   :page-sizes="[5, 10, 20, 50]" v-model:page-size="filter.pageSize"
+                   :page-sizes="[10, 20, 50]" v-model:page-size="filter.pageSize"
                    :total="filter.totalCount"
                    layout="total, sizes, prev, pager, next, jumper">
     </el-pagination>
@@ -240,7 +244,7 @@
   import {reactive, getCurrentInstance, onMounted} from "vue";
   import {dayjs, ElMessage, UploadFile, UploadFiles, ElMessageBox} from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
-  import { UploadFilled, Delete } from '@element-plus/icons-vue'
+  import { UploadFilled, Delete, Edit, Download} from '@element-plus/icons-vue'
   import localStorageUtil from "@/utils/localStorageUtil.ts";
 
   let {flexWidth} = f;
@@ -259,7 +263,7 @@
   const filter = reactive({
     dates: null,
     pageIndex: 1, //当前页码
-    pageSize: 5, //每页记录数
+    pageSize: 10, //每页记录数
     totalCount: 0, //总记录数
   })
 
@@ -521,8 +525,37 @@
     }
   }
 
-  //发送Ajax添加Fair
+  //发送Ajax添加/保存Fair
   const dataFormSubmit = () => {
+    if(!dialog.update){//add fair
+      addFair();
+    }else{//update fair
+      if(proxy.isAuth(['ENG'])){//update by Eng
+        editByEng();
+      }
+    }
+
+  }
+
+  const editByEng = () => {
+    proxy.$refs['dialogForm'].validate(valid => {
+      if(valid){
+        proxy.$http("/tracker/editFairByEng", "POST", dialog.dataForm, true, resp => {
+          if (resp.flag){
+            ElMessage.success("Fair edit successfully")
+            dialog.visible = false;
+            loadDataList();
+          }else{
+            ElMessage.error("Unable to edit the FAIR")
+          }
+        })
+      }else{
+        ElMessage.error('Data validation failed')
+      }
+    })
+  }
+
+  const addFair = () => {
     for (let d of dialog.dataForm.item){
       if(d.number == undefined || d.number == ""){
         d.number = "N/A";
@@ -545,7 +578,7 @@
       //发送请求
       proxy.$refs['dialogForm'].validate(valid => {
         if(valid){
-          proxy.$http(`/tracker/${dialog.dataForm.id == null ? 'insert' : 'update'}`, "POST", dialog.dataForm, true, resp => {
+          proxy.$http("/tracker/insert", "POST", dialog.dataForm, true, resp => {
             if(resp.flag){
               ElMessage.success("Fair added successfully")
               dialog.visible = false;
@@ -560,10 +593,9 @@
         }
       })
 
-    }).catch(() => {
-
+    }).catch(e => {
+      console.log(e)
     })
-
   }
 
   const editDownload = (id) => {
@@ -602,6 +634,27 @@
 
     })
 
+  }
+
+  const editHandle = (id) => {
+    let isEng = proxy.isAuth(['ENG']);
+    if(isEng){
+      //Eng - edit fair
+      dialog.update = true;
+      data.loading = true;
+      proxy.$http("/tracker/getFairByEng", "POST", {id}, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.clsPn = resp.result.clsPn;
+          dialog.dataForm.reason = resp.result.reason;
+          dialog.dataForm.id = id;
+          dialog.visible = true;
+        }else{
+          ElMessage.error("Service error");
+        }
+        data.loading = false;
+      })
+
+    }
   }
 
 </script>

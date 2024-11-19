@@ -9,12 +9,12 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 TODO
 Main tracker:
 35.3
-① 当Eng添加一个新的record时，先检查CLS PN，如果存在，则抛出消息提示CLS PNxxx已经存在，原因是xxx，是否还要添加？
-只有点击确定，才能添加
-② Eng只能修改Reason
-③ 上传pdf确保文件名不重复
-④ 下载和删除pdf
-⑤ 允许Eng添加多个Deviation # 和 Deviation QTY (查看体检内容)
+① Follow up with Steven Cheng for CGA ticket submission
+② only eng can delete fair
+once deleted, email notification to planner with reason
+③ increase pdf limit to 10
+④ enable users to download all pdfs into one zip file
+
 
 可能出现的bug:
 如果在同一天，分别上传不同的Fair，但是PDF文件名相同，新的文件会覆盖旧的同名文件！
