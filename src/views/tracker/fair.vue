@@ -106,7 +106,8 @@
                      :icon="Edit" circle
                      @click="editHandle(scope.row.id)">
           </el-button>
-          <el-button type="danger"
+          <!-- only ENG can delete the FAIR -->
+          <el-button type="danger" :disabled="!proxy.isAuth(['ENG'])"
                      :icon="Delete" circle
                      @click="deleteHandle(scope.row.id)">
           </el-button>
@@ -338,7 +339,7 @@
         data.dataList = resp.list;
         filter.totalCount =resp.totalCount; //总记录数
       }else{
-        ElMessage.error('Unable to load the fair data')
+        ElMessage.error('Unable to load the data')
       }
       data.loading = false; //关闭加载进度条
     })
@@ -542,7 +543,7 @@
       if(valid){
         proxy.$http("/tracker/editFairByEng", "POST", dialog.dataForm, true, resp => {
           if (resp.flag){
-            ElMessage.success("Fair edit successfully")
+            ElMessage.success("Fair edited successfully")
             dialog.visible = false;
             loadDataList();
           }else{
@@ -655,6 +656,43 @@
       })
 
     }
+  }
+
+  const deleteHandle = (id) => {
+    proxy.$http("/tracker/getFairByEng", "POST", {id}, true, resp => {
+      if(resp.code === 200){
+        dialog.dataForm.clsPn = resp.result.clsPn;
+
+        ElMessageBox.confirm(
+            `Are you sure to delete this Fair with CLS PN - ${dialog.dataForm.clsPn}?`,
+            "Warning",
+            {
+              confirmButtonText: 'Delete',
+              cancelButtonText: 'Cancel',
+              type: 'warning',
+              center: true
+            }
+        ).then(() => {
+          //发送请求
+          proxy.$http("/tracker/delete", "POST", {id}, true, resp => {
+            if(resp.flag){
+              ElMessage.success("Fair deleted successfully")
+              loadDataList();
+            }else{
+              ElMessage.error("Unable to delete the FAIR")
+            }
+
+          })
+
+        }).catch(e => {
+          console.log(e)
+        })
+
+      }else{
+        ElMessage.error("Service error");
+        return;
+      }
+    })
   }
 
 </script>
