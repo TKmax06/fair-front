@@ -23,7 +23,7 @@
 
         <!-- 新增按钮 -->
         <el-button type="primary"
-                   :disabled="!proxy.isAuth(['ENG'])"
+                   :disabled="!proxy.isAuth(['Engineer'])"
                    @click="addHandle()">
           Add
         </el-button>
@@ -35,7 +35,7 @@
 
     <!-- 表格 -->
     <el-table :data="data.dataList" border v-loading="data.loading" :header-cell-style="headerCellStyle">
-      <el-table-column label="ENG" header-align="center" align="center" width="50">
+      <el-table-column label="Engineer" header-align="center" align="center" width="50">
         <el-table-column type="index" header-align="center" align="center" width="50" label="#">
           <!-- #default="scope" 定义了一个名为 default 的插槽，并将当前行的数据传递给一个名为 scope 的变量 -->
           <template #default="scope">
@@ -106,8 +106,8 @@
                      :icon="Edit" circle
                      @click="editHandle(scope.row.id)">
           </el-button>
-          <!-- only ENG can delete the FAIR -->
-          <el-button type="danger" :disabled="!proxy.isAuth(['ENG'])"
+          <!-- only Engineer can delete the FAIR -->
+          <el-button type="danger" :disabled="!proxy.isAuth(['Engineer'])"
                      :icon="Delete" circle
                      @click="deleteHandle(scope.row.id)">
           </el-button>
@@ -120,9 +120,9 @@
 
     </el-table>
 
-    <!-- Add/Edit Fair(ENG) -->
+    <!-- Add/Edit Fair(Engineer) -->
     <el-dialog v-model="dialog.visible" :title="!dialog.update ? 'Add' : 'Edit'"
-               :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['ENG'])">
+               :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['Engineer'])">
 
       <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
 
@@ -222,13 +222,13 @@
       <span class="dialog-footer">
         <el-button type="danger" @click="addItem" v-if="!dialog.update">Add Deviation</el-button>
         <el-button @click="dialog.visible = false">Cancel</el-button>
-        <el-button type="primary" @click="dataFormSubmit">Save</el-button>
+        <el-button type="primary" @click="dataFormSubmit('Engineer')">Save</el-button>
       </span>
       </template>
     </el-dialog>
 
-    <!-- Edit Fair(PLANNER) -->
-    <el-dialog v-model="dialog_planner.visible" title="Edit" :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['PLANNER'])">
+    <!-- Edit Fair(Planner) -->
+    <el-dialog v-model="dialog_planner.visible" title="Edit" :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['Planner'])">
 
       <el-form :model="dialog_planner.dataForm" :rules="dialog_planner.dataRule" ref="dialogForm_Planner" label-width="140px">
 
@@ -260,17 +260,17 @@
         </el-form-item>
 
         <el-form-item label="SO" prop="so" label-position="left">
-          <el-input v-model="dialog_planner.dataForm.so" clearable/>
+          <el-input v-model="dialog_planner.dataForm.so" maxlength="20" clearable />
         </el-form-item>
 
         <el-form-item label="PO" prop="po" label-position="left">
-          <el-input v-model="dialog_planner.dataForm.po" clearable/>
+          <el-input v-model="dialog_planner.dataForm.po" maxlength="20" clearable/>
         </el-form-item>
 
-        <el-form-item label="Target Ship Date" prop="target_ship_date" label-position="left">
+        <el-form-item label="Target Ship Date" prop="targetShipDate" label-position="left">
           <el-date-picker style="width: 100%"
-              v-model="dialog_planner.dataForm.target_ship_date"
-              type="date"
+              v-model="dialog_planner.dataForm.targetShipDate"
+              type="date" value-format="YYYY-MM-DD"
               placeholder="Pick a day"
               :disabled-date="disabledDate"
               :size="'default'"
@@ -283,7 +283,7 @@
       <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialog_planner.visible = false">Cancel</el-button>
-        <el-button type="primary" @click="dataFormSubmit">Save</el-button>
+        <el-button type="primary" @click="dataFormSubmit('Planner')">Save</el-button>
       </span>
       </template>
     </el-dialog>
@@ -329,7 +329,7 @@
     totalCount: 0, //总记录数
   })
 
-  //弹窗控件变量 (ENG)
+  //弹窗控件变量 (Engineer)
   const dialog = reactive({
     visible: false, //是否显示弹窗，调试完成后记得改为false
     update: false,
@@ -384,7 +384,7 @@
 
   })
 
-  //弹窗控件变量 (PLANNER)
+  //弹窗控件变量 (Planner)
   const dialog_planner = reactive({
     visible: false, //是否显示弹窗，调试完成后记得改为false
     dataForm: {
@@ -396,7 +396,8 @@
       reason: null,
       so: null,
       po: null,
-      target_ship_date: null
+      targetShipDate: null,
+      planner: localStorageUtil.get("username"),
     },
 
     //数据校验
@@ -407,7 +408,7 @@
       po: [
         {required: true, message: 'PO cannot be empty!'}
       ],
-      target_ship_date: [{required: true, message: 'Target Ship Date cannot be empty!'}],
+      targetShipDate: [{required: true, message: 'Target Ship Date cannot be empty!'}],
     }
   })
 
@@ -616,33 +617,50 @@
   }
 
   //发送Ajax添加/保存Fair
-  const dataFormSubmit = () => {
-    if(!dialog.update){//add fair
-      addFair();
-    }else{//update fair
-      if(proxy.isAuth(['ENG'])){//update by Eng
-        editFair('ENG');
-      }else if(proxy.isAuth(['PLANNER'])){
-
+  const dataFormSubmit = (role) => {
+    if(role === 'Engineer'){
+      if(!dialog.update){//add fair
+        addFair();
+      }else{//update fair
+        editFair('Engineer');
       }
+    }else if(role === 'Planner'){
+      editFair('Planner');
     }
+
 
   }
 
   const editFair = (role) => {
-    proxy.$refs['dialogForm'].validate(valid => {
+    let modal = "";
+    let data = null;
+
+    if(role === 'Engineer'){
+      modal = 'dialogForm';
+      data = dialog.dataForm;
+    }
+    else if(role === 'Planner'){
+      modal = 'dialogForm_Planner';
+      data = dialog_planner.dataForm;
+    }
+    proxy.$refs[modal].validate(valid => {
       if(valid){
-        if(role.role === "ENG"){
-          proxy.$http("/tracker/editFairByEng", "POST", dialog.dataForm, true, resp => {
-            if (resp.flag){
-              ElMessage.success("Fair edited successfully")
+        proxy.$http("/tracker/editFairBy"+role, "POST", data, true, resp => {
+          if (resp.flag){
+            ElMessage.success("Fair edited successfully")
+            if(role === 'Engineer'){
               dialog.visible = false;
-              loadDataList();
-            }else{
-              ElMessage.error("Unable to edit the FAIR")
             }
-          })
-        }
+            else if(role === 'Planner'){
+              dialog_planner.visible = false;
+            }
+            dialog.visible = false;
+            loadDataList();
+          }else{
+            ElMessage.error("Unable to edit the FAIR")
+          }
+        })
+
 
       }else{
         ElMessage.error('Data validation failed')
@@ -733,17 +751,11 @@
   }
 
   const editHandle = (id) => {
-
     //Eng - edit fair
-    if(proxy.isAuth(['ENG'])){
-
+    if(proxy.isAuth(['Engineer'])){
       dialog.update = true;
       data.loading = true;
-      //移除校验规则
-      proxy.$nextTick(()=>{//确保DOM更新后执行操作
-        proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
-      })
-      proxy.$http("/tracker/getFairByEng", "POST", {id}, true, resp => {
+      proxy.$http("/tracker/getFairByEngineer", "POST", {id}, true, resp => {
         if(resp.code === 200){
           dialog.dataForm.clsPn = resp.result.clsPn;
           dialog.dataForm.reason = resp.result.reason;
@@ -754,13 +766,13 @@
         }
         data.loading = false;
       })
-    }else if(proxy.isAuth(['PLANNER'])){ // TODO PLANNER - edit fair
-      //PLANNER - edit fair
-      data.loading = true;
+    }else if(proxy.isAuth(['Planner'])){
       //移除校验规则
       proxy.$nextTick(()=>{//确保DOM更新后执行操作
         proxy.$refs['dialogForm_Planner'].resetFields(); //清除表单数据和校验规则
       })
+      //Planner - edit fair
+      data.loading = true;
       proxy.$http("/tracker/getFairByPlanner", "POST", {id}, true, resp => {
         if(resp.code === 200){
           dialog_planner.dataForm.clsPn = resp.result.clsPn;
