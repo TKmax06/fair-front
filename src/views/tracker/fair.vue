@@ -143,7 +143,7 @@
         </el-form-item>
 
         <el-form-item label="Eng Name" prop="engName" label-position="left" v-if="!dialog.update">
-          <el-input v-model="dialog.dataForm.engName"/>
+          <el-input v-model="dialog.dataForm.engName" disabled/>
         </el-form-item>
 
         <el-form-item label="Deviation" label-position="left" class="is-required" v-if="!dialog.update">
@@ -222,7 +222,68 @@
       <span class="dialog-footer">
         <el-button type="danger" @click="addItem" v-if="!dialog.update">Add Deviation</el-button>
         <el-button @click="dialog.visible = false">Cancel</el-button>
-        <el-button type="primary" @click="dataFormSubmit">{{!dialog.dataForm.id ? 'Save' : 'Edit'}}</el-button>
+        <el-button type="primary" @click="dataFormSubmit">Save</el-button>
+      </span>
+      </template>
+    </el-dialog>
+
+    <!-- Edit Fair(PLANNER) -->
+    <el-dialog v-model="dialog_planner.visible" title="Edit" :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['PLANNER'])">
+
+      <el-form :model="dialog_planner.dataForm" :rules="dialog_planner.dataRule" ref="dialogForm_Planner" label-width="140px">
+
+        <!-- prop="username": 绑定 dialog.dataForm 中 username 的验证规则，并应用到文本框上-->
+        <el-form-item label="CLS PN" prop="clsPn" label-position="left">
+          <el-input v-model="dialog_planner.dataForm.clsPn" disabled/>
+        </el-form-item>
+
+        <el-form-item label="Revision" prop="revision" label-position="left" v-if="!dialog.update">
+          <el-input v-model="dialog_planner.dataForm.revision" disabled />
+        </el-form-item>
+
+        <!-- customer is auto filled based on the suffix of the CLS PN -->
+        <el-form-item label="Customer" prop="customer" label-position="left" v-if="!dialog.update">
+          <el-input v-model="dialog_planner.dataForm.customer" disabled/>
+        </el-form-item>
+
+        <el-form-item label="Eng Name" prop="engName" label-position="left" v-if="!dialog.update">
+          <el-input v-model="dialog_planner.dataForm.engName" disabled/>
+        </el-form-item>
+
+        <el-form-item label="Reason" prop="reason" label-position="left">
+          <el-input
+              v-model="dialog_planner.dataForm.reason"
+              style="width: 100%"
+              :rows="5"
+              type="textarea"
+              disabled/>
+        </el-form-item>
+
+        <el-form-item label="SO" prop="so" label-position="left">
+          <el-input v-model="dialog_planner.dataForm.so" clearable/>
+        </el-form-item>
+
+        <el-form-item label="PO" prop="po" label-position="left">
+          <el-input v-model="dialog_planner.dataForm.po" clearable/>
+        </el-form-item>
+
+        <el-form-item label="Target Ship Date" prop="target_ship_date" label-position="left">
+          <el-date-picker style="width: 100%"
+              v-model="dialog_planner.dataForm.target_ship_date"
+              type="date"
+              placeholder="Pick a day"
+              :disabled-date="disabledDate"
+              :size="'default'"
+              clearable/>
+        </el-form-item>
+
+      </el-form>
+
+      <!-- 弹窗页脚 -->
+      <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialog_planner.visible = false">Cancel</el-button>
+        <el-button type="primary" @click="dataFormSubmit">Save</el-button>
       </span>
       </template>
     </el-dialog>
@@ -279,7 +340,7 @@
       customer: null,
       customerList: [],
       plannerList: [],
-      engName: null,
+      engName: localStorageUtil.get("username").split("@")[0],
       item: [{
         number: "",
         qty:""
@@ -288,7 +349,8 @@
       planner: null,
       fairType: null,
       deviationFile: [], //文件保存在minio服务器的相对路径
-      pdfUrl: null
+      pdfUrl: null,
+      engEmail: null
     },
 
     //上传PDF
@@ -320,6 +382,33 @@
       fairType: [{required: true, message: 'Fair type cannot be empty!'}]
     }
 
+  })
+
+  //弹窗控件变量 (PLANNER)
+  const dialog_planner = reactive({
+    visible: false, //是否显示弹窗，调试完成后记得改为false
+    dataForm: {
+      id: null, //Fair主键
+      clsPn: null,
+      revision: null,
+      customer: null,
+      engName: null,
+      reason: null,
+      so: null,
+      po: null,
+      target_ship_date: null
+    },
+
+    //数据校验
+    dataRule: {
+      so: [
+        {required: true, message: 'SO cannot be empty!'}
+      ],
+      po: [
+        {required: true, message: 'PO cannot be empty!'}
+      ],
+      target_ship_date: [{required: true, message: 'Target Ship Date cannot be empty!'}],
+    }
   })
 
   const searchHandle = () => {
@@ -532,24 +621,29 @@
       addFair();
     }else{//update fair
       if(proxy.isAuth(['ENG'])){//update by Eng
-        editByEng();
+        editFair('ENG');
+      }else if(proxy.isAuth(['PLANNER'])){
+
       }
     }
 
   }
 
-  const editByEng = () => {
+  const editFair = (role) => {
     proxy.$refs['dialogForm'].validate(valid => {
       if(valid){
-        proxy.$http("/tracker/editFairByEng", "POST", dialog.dataForm, true, resp => {
-          if (resp.flag){
-            ElMessage.success("Fair edited successfully")
-            dialog.visible = false;
-            loadDataList();
-          }else{
-            ElMessage.error("Unable to edit the FAIR")
-          }
-        })
+        if(role.role === "ENG"){
+          proxy.$http("/tracker/editFairByEng", "POST", dialog.dataForm, true, resp => {
+            if (resp.flag){
+              ElMessage.success("Fair edited successfully")
+              dialog.visible = false;
+              loadDataList();
+            }else{
+              ElMessage.error("Unable to edit the FAIR")
+            }
+          })
+        }
+
       }else{
         ElMessage.error('Data validation failed')
       }
@@ -579,6 +673,7 @@
       //发送请求
       proxy.$refs['dialogForm'].validate(valid => {
         if(valid){
+          dialog.dataForm.engEmail = localStorageUtil.get("username");
           proxy.$http("/tracker/insert", "POST", dialog.dataForm, true, resp => {
             if(resp.flag){
               ElMessage.success("Fair added successfully")
@@ -638,11 +733,16 @@
   }
 
   const editHandle = (id) => {
-    let isEng = proxy.isAuth(['ENG']);
-    if(isEng){
-      //Eng - edit fair
+
+    //Eng - edit fair
+    if(proxy.isAuth(['ENG'])){
+
       dialog.update = true;
       data.loading = true;
+      //移除校验规则
+      proxy.$nextTick(()=>{//确保DOM更新后执行操作
+        proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
+      })
       proxy.$http("/tracker/getFairByEng", "POST", {id}, true, resp => {
         if(resp.code === 200){
           dialog.dataForm.clsPn = resp.result.clsPn;
@@ -654,8 +754,29 @@
         }
         data.loading = false;
       })
-
+    }else if(proxy.isAuth(['PLANNER'])){ // TODO PLANNER - edit fair
+      //PLANNER - edit fair
+      data.loading = true;
+      //移除校验规则
+      proxy.$nextTick(()=>{//确保DOM更新后执行操作
+        proxy.$refs['dialogForm_Planner'].resetFields(); //清除表单数据和校验规则
+      })
+      proxy.$http("/tracker/getFairByPlanner", "POST", {id}, true, resp => {
+        if(resp.code === 200){
+          dialog_planner.dataForm.clsPn = resp.result.clsPn;
+          dialog_planner.dataForm.revision = resp.result.revision;
+          dialog_planner.dataForm.customer = resp.result.customer;
+          dialog_planner.dataForm.engName = resp.result.engName;
+          dialog_planner.dataForm.reason = resp.result.reason;
+          dialog_planner.dataForm.id = id;
+          dialog_planner.visible = true;
+        }else{
+          ElMessage.error("Service error");
+        }
+        data.loading = false;
+      })
     }
+
   }
 
   const deleteHandle = (id) => {
@@ -693,6 +814,10 @@
         return;
       }
     })
+  }
+
+  const disabledDate = (time: Date) => {
+    return time.getTime() < Date.now()
   }
 
 </script>

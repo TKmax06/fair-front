@@ -27,12 +27,15 @@ import $ from 'jquery';
 //导入ElementUI的消息通知组件，下面封装全局Ajax的时候处理异常的时候需要弹出通知
 import { ElMessage } from 'element-plus';
 
-//后端项目的URL根路径
-const baseUrl = 'https://localhost:7700/fair-api';
+//后端项目的URL根路径(上传到服务器后一定要写IP!!!)
+const baseUrl = 'http://localhost:7700/fair-api';
+//const baseUrl = 'http://10.10.6.244:7700/fair-api';
+//const baseUrl = 'https://43.153.8.245:7700/fair-api';
 app.config.globalProperties.$baseUrl = baseUrl; //设置全局变量$baseUrl
 
 //Minio服务器地址
 const minioUrl = 'http://43.153.8.245:9000/fair';
+//const minioUrl = 'http://10.10.6.244:9000/fair';
 app.config.globalProperties.$minioUrl = minioUrl;
 
 import localStorageUtil from "./utils/localStorageUtil.ts";

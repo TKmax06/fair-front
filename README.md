@@ -9,11 +9,7 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 TODO
 Main tracker:
 35.3
-① Follow up with Steven Cheng for CGA ticket submission
-② only eng can delete fair
-once deleted, email notification to planner with reason
-③ increase pdf limit to 10
-④ enable users to download all pdfs into one zip file
+① 回退到http
 
 
 可能出现的bug:
