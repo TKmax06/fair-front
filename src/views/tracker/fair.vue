@@ -274,7 +274,7 @@
               :data="dialog.upload.data" :show-file-list="true"
               accept=".pdf" :before-upload="pdfBeforeUpload"
               :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
-              :on-remove="pdfRemovePlanner" :before-remove="pdfBeforeRemove"
+              :on-remove="pdfRemoveSuccess" :before-remove="pdfBeforeRemove"
               :limit="10"
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -304,7 +304,7 @@
       <!-- 弹窗页脚 -->
       <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialog_planner.visible=false">Cancel</el-button>
+        <el-button @click="cancel('Planner')" :disabled="dialog_planner.disabled">Cancel</el-button>
         <el-button type="primary" @click="dataFormSubmit('Planner')">Save</el-button>
       </span>
       </template>
@@ -421,6 +421,10 @@
       targetShipDate: null,
       planner: localStorageUtil.get("username"),
     },
+
+    isFirstTime: false,
+
+    disabled: false,
 
     //数据校验
     dataRule: {
@@ -579,8 +583,11 @@
       //上传控件中显示已上传的文件(完整路径)
       dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
       //移除校验规则
-      proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
-      proxy.$refs['dialogForm'].resetFields('po'); //清除po的校验规则
+      if(proxy.isAuth(['Engineer'])){
+        proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
+      }else if(proxy.isAuth(['Planner'])){
+        proxy.$refs['dialogForm_Planner'].resetFields('po'); //清除po的校验规则
+      }
     }
   }
 
@@ -605,6 +612,10 @@
       proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
         if(resp.code === 200){
           dialog.dataForm.deviationFile = dialog.dataForm.deviationFile.filter( f => !f.includes(file.name));
+          //if planner deleted file and try to click cancel button, disable cancel button
+          if(proxy.isAuth(['Planner']) && !dialog_planner.isFirstTime){
+            dialog_planner.disabled = true;
+          }
         }else{
           ElMessage.error('Unable to remove the file')
         }
@@ -666,6 +677,7 @@
     }
     proxy.$refs[modal].validate(valid => {
       if(valid){
+        dialog_planner.dataForm.po = dialog.dataForm.deviationFile;
         proxy.$http("/tracker/editFairBy"+role, "POST", data, true, resp => {
           if (resp.flag){
             ElMessage.success("Fair edited successfully")
@@ -804,12 +816,20 @@
           dialog_planner.dataForm.engName = resp.result.engName;
           dialog_planner.dataForm.reason = resp.result.reason;
           dialog_planner.dataForm.so = resp.result.so;
-          resp.result.po.map(item => {
-            dialog.upload.files.push({
-              url: item,
-              name: item.split("/")[3]
-            });
-          })
+          if(dialog_planner.dataForm.so == null){
+            dialog_planner.isFirstTime = true;
+          }else{
+            dialog_planner.isFirstTime = false;
+          }
+
+          if(resp.result.po != null){
+            resp.result.po.map(item => {
+              dialog.upload.files.push({
+                url: item,
+                name: item.split("/")[3]
+              });
+            })
+          }
 
           //dialog.upload.files= resp.result.po ? resp.result.po.split(",").map(p => {p.split("/")[3]}) : []; //回显上传文件列表
           dialog_planner.dataForm.targetShipDate = resp.result.targetShipDate;
@@ -873,21 +893,15 @@
         return;
       }
       dialog.visible = false
+    }else if(role === 'Planner'){
+      if(dialog_planner.isFirstTime && dialog.upload.files.length > 0){
+        ElMessage.error("Please delete all the files you have uploaded first");
+        return;
+      }
+      dialog_planner.visible = false
     }
   }
 
-  const pdfRemovePlanner = (file, fileList) => {
-    //如果上传重复的文件会触发before-upload，此时file.status是ready，而before-upload之后又会触发该事件，从而导致文件被删除
-    //而上传成功的回调执行该方法返回的file.status是success，所以我们必须保证文件上传成功后才能触发此方法
-    if(file && file.status === "success"){
-      let removeFile = {path: file.url};
-      proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
-        if(resp.code !== 200){
-          ElMessage.error('Unable to remove the file')
-        }
-      })
-    }
-  }
 </script>
 
 <style scoped lang="less">

@@ -16,7 +16,10 @@ TODO
     - 修改po的类型为json
 
 6. Once carmen/jules has selected the fair owner(see col K from CNO Fair - Dev), email cno-fair-CLS@celestica.com
-7. bug fix: you have to delete all the uploaded pdf files before clicking cancel button
+7. bug fix: 
+① All users have to delete all the uploaded pdf files before clicking cancel button
+② for planner, if you have updated the pdf files, then disable cancel button
+③ planners not allowed to type target ship date
 
 Content as below:
 This fair is owned by xxx, please update the fair as necessary.
