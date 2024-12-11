@@ -34,7 +34,7 @@
     </el-form>
 
     <!-- 表格 -->
-    <el-table :data="data.dataList" border v-loading="data.loading" :header-cell-style="headerCellStyle">
+    <el-table :data="data.dataList" border v-loading="data.loading" :header-cell-style="headerCellStyle" stripe>
       <el-table-column label="Engineer" header-align="center" align="center" width="50">
         <el-table-column type="index" header-align="center" align="center" width="50" label="#">
           <!-- #default="scope" 定义了一个名为 default 的插槽，并将当前行的数据传递给一个名为 scope 的变量 -->
@@ -66,7 +66,7 @@
       <el-table-column label="Planner" header-align="center" align="center">
         <el-table-column prop="so" header-align="center" align="center" label="SO" :min-width="flexWidth('so', data.dataList, 'SO')"/>
         <el-table-column prop="po" header-align="center" align="center" label="PO" :min-width="flexWidth('po', data.dataList, 'PO')"/>
-        <el-table-column prop="targetdate" header-align="center" align="center" label="Target Ship Date" :min-width="flexWidth('targetdate', data.dataList, 'Target Ship Date')"/>
+        <el-table-column prop="targetShipDate" header-align="center" align="center" label="Target Ship Date" :min-width="flexWidth('targetShipDate', data.dataList, 'Target Ship Date')"/>
       </el-table-column>
 
       <el-table-column label="Carmen/Jules" header-align="center" align="center">
@@ -121,7 +121,7 @@
     </el-table>
 
     <!-- Add/Edit Fair(Engineer) -->
-    <el-dialog v-model="dialog.visible" :title="!dialog.update ? 'Add' : 'Edit'"
+    <el-dialog v-model="dialog.visible" :title="!dialog.update ? 'Add' : 'Edit'" :show-close="false" :close-on-press-escape="false"
                :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['Engineer'])">
 
       <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
@@ -151,10 +151,10 @@
           <el-row :gutter="10" class="item-row"
                   v-for="(one, $index) in dialog.dataForm.item" :key="$index">
             <el-col :span="10">
-              <el-input v-model="one.number" placeholder="Deviation #" maxlength="50" clearable @blur="handleDeviation($index, $event)"/>
+              <el-input v-model="one.number" placeholder="Deviation #" maxlength="30" clearable @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="10">
-              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="10" clearable @blur="handleDeviation($index, $event)"/>
+              <el-input v-model="one.qty" placeholder="Deviation QTY" maxlength="30" clearable @blur="handleDeviation($index, $event)"/>
             </el-col>
             <el-col :span="1">
               <el-button type="primary" :icon="Delete" @click="deleteItem($index)" />
@@ -221,14 +221,15 @@
       <template #footer>
       <span class="dialog-footer">
         <el-button type="danger" @click="addItem" v-if="!dialog.update">Add Deviation</el-button>
-        <el-button @click="dialog.visible = false">Cancel</el-button>
+        <el-button @click="cancel('Engineer')">Cancel</el-button>
         <el-button type="primary" @click="dataFormSubmit('Engineer')">Save</el-button>
       </span>
       </template>
     </el-dialog>
 
     <!-- Edit Fair(Planner) -->
-    <el-dialog v-model="dialog_planner.visible" title="Edit" :close-on-click-modal="false" width="600px" v-if="proxy.isAuth(['Planner'])">
+    <el-dialog v-model="dialog_planner.visible" title="Edit" :close-on-click-modal="false"  :show-close="false"
+               :close-on-press-escape="false" width="600px" v-if="proxy.isAuth(['Planner'])">
 
       <el-form :model="dialog_planner.dataForm" :rules="dialog_planner.dataRule" ref="dialogForm_Planner" label-width="140px">
 
@@ -263,8 +264,29 @@
           <el-input v-model="dialog_planner.dataForm.so" maxlength="20" clearable />
         </el-form-item>
 
-        <el-form-item label="PO" prop="po" label-position="left">
-          <el-input v-model="dialog_planner.dataForm.po" maxlength="20" clearable/>
+        <el-form-item label="PO" label-position="left" prop="po">
+          <el-upload
+              class="upload-pdf"
+              drag
+              :action="dialog.upload.action"
+              :headers="dialog.upload.headers"
+              v-model:file-list="dialog.upload.files"
+              :data="dialog.upload.data" :show-file-list="true"
+              accept=".pdf" :before-upload="pdfBeforeUpload"
+              :on-success="pdfUploadSuccess" :on-error="pdfUploadError"
+              :on-remove="pdfRemovePlanner" :before-remove="pdfBeforeRemove"
+              :limit="10"
+          >
+            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+            <div class="el-upload__text">
+              Drop PDF here or <em>click to upload</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                No more than 10 PDFs allowed to upload, each PDF file size less than 1MB
+              </div>
+            </template>
+          </el-upload>
         </el-form-item>
 
         <el-form-item label="Target Ship Date" prop="targetShipDate" label-position="left">
@@ -273,7 +295,7 @@
               type="date" value-format="YYYY-MM-DD"
               placeholder="Pick a day"
               :disabled-date="disabledDate"
-              :size="'default'"
+              :size="'default'" :editable="false"
               clearable/>
         </el-form-item>
 
@@ -282,7 +304,7 @@
       <!-- 弹窗页脚 -->
       <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialog_planner.visible = false">Cancel</el-button>
+        <el-button @click="dialog_planner.visible=false">Cancel</el-button>
         <el-button type="primary" @click="dataFormSubmit('Planner')">Save</el-button>
       </span>
       </template>
@@ -303,7 +325,7 @@
 
 <script setup lang="ts">
 
-  import {reactive, getCurrentInstance, onMounted} from "vue";
+  import {reactive, getCurrentInstance, onMounted, ref} from "vue";
   import {dayjs, ElMessage, UploadFile, UploadFiles, ElMessageBox} from "element-plus";
   import f from "@/utils/tableWidthUtil.ts";
   import { UploadFilled, Delete, Edit, Download} from '@element-plus/icons-vue'
@@ -313,10 +335,10 @@
 
   const {proxy} = getCurrentInstance();
 
-  //校验Deviation Dropbox
+  //校验 Dropbox
   const uploadFileChange = (rule, value, callback) => {
     if(dialog.upload.files.length === 0){
-      return callback("Deviation Dropbox cannot be empty!");
+      return callback("Dropbox cannot be empty!");
     }
     return true;
   }
@@ -395,7 +417,7 @@
       engName: null,
       reason: null,
       so: null,
-      po: null,
+      po: dialog.dataForm.deviationFile, //文件保存在minio服务器的相对路径
       targetShipDate: null,
       planner: localStorageUtil.get("username"),
     },
@@ -405,9 +427,7 @@
       so: [
         {required: true, message: 'SO cannot be empty!'}
       ],
-      po: [
-        {required: true, message: 'PO cannot be empty!'}
-      ],
+      po: [{required: true, validator:uploadFileChange, trigger: 'change'}],
       targetShipDate: [{required: true, message: 'Target Ship Date cannot be empty!'}],
     }
   })
@@ -509,9 +529,9 @@
     }
   }
 
-  const autoFillCustomer = (val) => {
-    dialog.dataForm.clspn = val.toUpperCase().trim();
-    let pnSuffix = dialog.dataForm.clspn?.slice(-3);
+  const autoFillCustomer = (val:string) => {
+    dialog.dataForm.clsPn = val.toUpperCase().trim();
+    let pnSuffix = dialog.dataForm.clsPn?.slice(-3);
     let suffixList = dialog.dataForm.customerList;
     let match = suffixList.filter( c => c.suffix === pnSuffix)[0];
     if(match == undefined){
@@ -560,6 +580,7 @@
       dialog.dataForm.pdfUrl = `${proxy.$minioUrl}/${path}`;
       //移除校验规则
       proxy.$refs['dialogForm'].resetFields('devbox'); //清除devbox的校验规则
+      proxy.$refs['dialogForm'].resetFields('po'); //清除po的校验规则
     }
   }
 
@@ -742,6 +763,7 @@
           }
 
         }
+
       }else{
         ElMessage.error("Unable to download the file");
       }
@@ -773,6 +795,7 @@
       })
       //Planner - edit fair
       data.loading = true;
+      dialog.upload.files = [];
       proxy.$http("/tracker/getFairByPlanner", "POST", {id}, true, resp => {
         if(resp.code === 200){
           dialog_planner.dataForm.clsPn = resp.result.clsPn;
@@ -780,6 +803,17 @@
           dialog_planner.dataForm.customer = resp.result.customer;
           dialog_planner.dataForm.engName = resp.result.engName;
           dialog_planner.dataForm.reason = resp.result.reason;
+          dialog_planner.dataForm.so = resp.result.so;
+          resp.result.po.map(item => {
+            dialog.upload.files.push({
+              url: item,
+              name: item.split("/")[3]
+            });
+          })
+
+          //dialog.upload.files= resp.result.po ? resp.result.po.split(",").map(p => {p.split("/")[3]}) : []; //回显上传文件列表
+          dialog_planner.dataForm.targetShipDate = resp.result.targetShipDate;
+
           dialog_planner.dataForm.id = id;
           dialog_planner.visible = true;
         }else{
@@ -832,6 +866,28 @@
     return time.getTime() < Date.now()
   }
 
+  const cancel = (role:string) => {
+    if(role === 'Engineer'){
+      if(dialog.upload.files.length > 0){
+        ElMessage.error("Please delete all the files you have uploaded first");
+        return;
+      }
+      dialog.visible = false
+    }
+  }
+
+  const pdfRemovePlanner = (file, fileList) => {
+    //如果上传重复的文件会触发before-upload，此时file.status是ready，而before-upload之后又会触发该事件，从而导致文件被删除
+    //而上传成功的回调执行该方法返回的file.status是success，所以我们必须保证文件上传成功后才能触发此方法
+    if(file && file.status === "success"){
+      let removeFile = {path: file.url};
+      proxy.$http("/file/removePDF", "DELETE", removeFile, true, resp => {
+        if(resp.code !== 200){
+          ElMessage.error('Unable to remove the file')
+        }
+      })
+    }
+  }
 </script>
 
 <style scoped lang="less">

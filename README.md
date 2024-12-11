@@ -7,13 +7,21 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 注意：没有整合SVG库
 
 TODO
-Main tracker:
-35.3
-① 回退到http
+1. keep the original pdf name - done
+2. add stripe style to the table - done
+3. maximum 30 characters for dev quantity and number - done
+4. add loading style for download button
+------------------------------------------------------------------
+5. PO should be dropbox
+    - 修改po的类型为json
+
+6. Once carmen/jules has selected the fair owner(see col K from CNO Fair - Dev), email cno-fair-CLS@celestica.com
+7. bug fix: you have to delete all the uploaded pdf files before clicking cancel button
+
+Content as below:
+This fair is owned by xxx, please update the fair as necessary.
 
 
-可能出现的bug:
-如果在同一天，分别上传不同的Fair，但是PDF文件名相同，新的文件会覆盖旧的同名文件！
 
 用户列表地址：
 https://docs.google.com/spreadsheets/d/1PMfgyhZb0ZYhjeDEBtMzCYU2mwq8i9vlG7mFKe0QCPo/edit?gid=0#gid=0

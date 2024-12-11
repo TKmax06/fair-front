@@ -31,7 +31,7 @@
       <div class="boxfoot"></div>
     </div>
   </div>
-  <div class="copyright">&copy; All Right Reserved By <a href="https://www.celestica.com/" target="_blank">Celestica</a> 2024</div>
+  <div class="copyright">&copy; All Right Reserved By <a href="https://www.celestica.com/" target="_blank">Celestica</a> 2025</div>
 
   <canvas id='canvas' class="canvas"></canvas>
 
