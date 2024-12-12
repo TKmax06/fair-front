@@ -310,6 +310,12 @@
       </template>
     </el-dialog>
 
+    <!-- Download Confirmation(deviation or PO) -->
+    <el-dialog v-model="download.visible" title="Please select the files to download" :close-on-click-modal="false" width="400px">
+      <el-button type="primary" @click="downloadFiles('deviation')">Deviation</el-button>
+      <el-button type="warning" :disabled="download.disablePO" @click="downloadFiles('po')">PO</el-button>
+    </el-dialog>
+
     <el-divider />
 
     <!-- 分页控件 -->
@@ -334,6 +340,14 @@
   let {flexWidth} = f;
 
   const {proxy} = getCurrentInstance();
+
+  const download = reactive({
+    visible: false,
+    id: null,
+    disablePO: true,
+    deviation: [],
+    po: [],
+  })
 
   //校验 Dropbox
   const uploadFileChange = (rule, value, callback) => {
@@ -491,6 +505,7 @@
   //新增按钮点击事件
   const addHandle = () => {
     dialog.dataForm.id = null;
+    dialog.dataForm.clsPn = null;
     dialog.dataForm.customerList = [];
     dialog.dataForm.plannerList = [];
     dialog.dataForm.deviationFile = [];
@@ -746,16 +761,30 @@
   }
 
   const editDownload = (id) => {
+    proxy.$http(`/tracker/getDownloadInfo/${id}`, "GET", null, true, resp => {
+      if(resp.code === 200){
+        download.id = id;
+        download.disablePO = resp.result.po == null || resp.result.po.length == 0;
+        download.deviation = resp.result.deviation;
+        download.po = resp.result.po;
+        download.visible = true;
+      }else{
+        ElMessage.error("Service Error");
+      }
+    })
+  }
 
+  const downloadFiles = (type:string) => {
     ElMessage.info("Start downloading file...");
 
+    let id = download.id;
     let token = localStorageUtil.get("token");
 
-    proxy.$http(`/file/countPDF?id=${id}&token=${token}`, "GET", null, true, resp => {
+    proxy.$http(`/file/countPDF?id=${id}&type=${type}&token=${token}`, "GET", null, true, resp => {
       if(resp.code === 200){
 
         for (let i = 0; i < resp.count; i++) {
-          let url = `${proxy.$baseUrl}/file/downloadPDF?id=${id}&count=${i}&token=${token}`;
+          let url = `${proxy.$baseUrl}/file/downloadPDF?id=${id}&count=${i}&type=${type}&token=${token}`;
 
           let timer = null;
           try{
@@ -776,12 +805,12 @@
 
         }
 
+        download.visible = false;
       }else{
         ElMessage.error("Unable to download the file");
       }
 
     })
-
   }
 
   const editHandle = (id) => {
@@ -816,11 +845,7 @@
           dialog_planner.dataForm.engName = resp.result.engName;
           dialog_planner.dataForm.reason = resp.result.reason;
           dialog_planner.dataForm.so = resp.result.so;
-          if(dialog_planner.dataForm.so == null){
-            dialog_planner.isFirstTime = true;
-          }else{
-            dialog_planner.isFirstTime = false;
-          }
+          dialog_planner.isFirstTime = dialog_planner.dataForm.so == null;
 
           if(resp.result.po != null){
             resp.result.po.map(item => {
@@ -831,7 +856,6 @@
             })
           }
 
-          //dialog.upload.files= resp.result.po ? resp.result.po.split(",").map(p => {p.split("/")[3]}) : []; //回显上传文件列表
           dialog_planner.dataForm.targetShipDate = resp.result.targetShipDate;
 
           dialog_planner.dataForm.id = id;
@@ -846,7 +870,7 @@
   }
 
   const deleteHandle = (id) => {
-    proxy.$http("/tracker/getFairByEng", "POST", {id}, true, resp => {
+    proxy.$http("/tracker/getFairByEngineer", "POST", {id}, true, resp => {
       if(resp.code === 200){
         dialog.dataForm.clsPn = resp.result.clsPn;
 
@@ -887,15 +911,16 @@
   }
 
   const cancel = (role:string) => {
+    let msg:string = "Please delete all the files you have uploaded first";
     if(role === 'Engineer'){
       if(dialog.upload.files.length > 0){
-        ElMessage.error("Please delete all the files you have uploaded first");
+        ElMessage.error(msg);
         return;
       }
       dialog.visible = false
     }else if(role === 'Planner'){
       if(dialog_planner.isFirstTime && dialog.upload.files.length > 0){
-        ElMessage.error("Please delete all the files you have uploaded first");
+        ElMessage.error(msg);
         return;
       }
       dialog_planner.visible = false
