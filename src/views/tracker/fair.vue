@@ -70,7 +70,7 @@
       </el-table-column>
 
       <el-table-column label="Carmen/Jules" header-align="center" align="center">
-        <el-table-column prop="fairowner" header-align="center" align="center" label="FAI Owner" :min-width="flexWidth('fairowner', data.dataList, 'FAI Owner', 20)"/>
+        <el-table-column prop="fairOwner" header-align="center" align="center" label="FAI Owner" :min-width="flexWidth('fairOwner', data.dataList, 'FAI Owner', 20)"/>
       </el-table-column>
 
       <el-table-column label="FAIR TEAM" header-align="center" align="center">
@@ -103,16 +103,16 @@
       <el-table-column header-align="center" align="left" width="147" label="Action" fixed="right">
         <template #default="scope">
           <el-button type="primary" :disabled="proxy.isAuth(['Viewer'])"
-                     :icon="Edit" circle
+                     :icon="Edit" circle plain
                      @click="editHandle(scope.row.id)">
           </el-button>
           <!-- only Engineer can delete the FAIR -->
           <el-button type="danger" :disabled="!proxy.isAuth(['Engineer'])"
-                     :icon="Delete" circle
+                     :icon="Delete" circle plain
                      @click="deleteHandle(scope.row.id)">
           </el-button>
           <el-button type="success"
-                     :icon="Download" circle
+                     :icon="Download" circle plain
                      @click="editDownload(scope.row.id)">
           </el-button>
         </template>
@@ -312,8 +312,32 @@
 
     <!-- Download Confirmation(deviation or PO) -->
     <el-dialog v-model="download.visible" title="Please select the files to download" :close-on-click-modal="false" width="400px">
-      <el-button type="primary" @click="downloadFiles('deviation')">Deviation</el-button>
-      <el-button type="warning" :disabled="download.disablePO" @click="downloadFiles('po')">PO</el-button>
+      <el-button type="primary" @click="downloadFiles('deviation')" plain>Deviation</el-button>
+      <el-button type="warning" :disabled="download.disablePO" @click="downloadFiles('po')" plain>PO</el-button>
+    </el-dialog>
+
+    <!-- Assign Fair Owner(Jules/Carmen) -->
+    <el-dialog v-model="dialog.visible" title="Edit"  width="600px" v-if="proxy.isAuth(['Admin'])">
+
+      <el-form :model="dialog.dataForm" :rules="dialog.dataRule" ref="dialogForm" label-width="140px">
+
+        <!-- dropdown list -->
+        <el-form-item label="Select FAI Owner" prop="fairOwner" label-position="left">
+          <el-select v-model="dialog.dataForm.fairOwner" placeholder="Select FAI Owner">
+            <el-option v-for="f in dialog.dataForm.fairOwnerList" :label="f.email"
+                       :value="f.email" :key="f.id" />
+          </el-select>
+        </el-form-item>
+
+      </el-form>
+
+      <!-- 弹窗页脚 -->
+      <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialog.visible = false">Cancel</el-button>
+        <el-button type="primary" @click="fairOwnerSubmit">Save</el-button>
+      </span>
+      </template>
     </el-dialog>
 
     <el-divider />
@@ -336,6 +360,7 @@
   import f from "@/utils/tableWidthUtil.ts";
   import { UploadFilled, Delete, Edit, Download} from '@element-plus/icons-vue'
   import localStorageUtil from "@/utils/localStorageUtil.ts";
+  import axios from 'axios';
 
   let {flexWidth} = f;
 
@@ -386,7 +411,9 @@
       fairType: null,
       deviationFile: [], //文件保存在minio服务器的相对路径
       pdfUrl: null,
-      engEmail: null
+      engEmail: null,
+      fairOwner: null,
+      fairOwnerList: []
     },
 
     //上传PDF
@@ -415,7 +442,8 @@
       devbox: [{required: true, validator:uploadFileChange, trigger: 'change'}],
       reason: [{required: true, message: 'Reason cannot be empty!'}],
       planner: [{required: true, message: 'Planner cannot be empty!'}],
-      fairType: [{required: true, message: 'Fair type cannot be empty!'}]
+      fairType: [{required: true, message: 'Fair type cannot be empty!'}],
+      fairOwner: [{required: true, message: 'Fair owner cannot be empty!'}]
     }
 
   })
@@ -675,7 +703,6 @@
       editFair('Planner');
     }
 
-
   }
 
   const editFair = (role) => {
@@ -685,8 +712,7 @@
     if(role === 'Engineer'){
       modal = 'dialogForm';
       data = dialog.dataForm;
-    }
-    else if(role === 'Planner'){
+    } else if(role === 'Planner'){
       modal = 'dialogForm_Planner';
       data = dialog_planner.dataForm;
     }
@@ -774,19 +800,20 @@
     })
   }
 
-  const downloadFiles = (type:string) => {
+  const downloadFiles = async (type:string) => {
     ElMessage.info("Start downloading file...");
 
     let id = download.id;
     let token = localStorageUtil.get("token");
 
+    /** 分别下载一个个文件
     proxy.$http(`/file/countPDF?id=${id}&type=${type}&token=${token}`, "GET", null, true, resp => {
       if(resp.code === 200){
 
         for (let i = 0; i < resp.count; i++) {
           let url = `${proxy.$baseUrl}/file/downloadPDF?id=${id}&count=${i}&type=${type}&token=${token}`;
 
-          let timer = null;
+          let timer:any = null;
           try{
             //创建超链接对象
             let eleIF  = document.createElement('iframe');
@@ -811,6 +838,32 @@
       }
 
     })
+    **/
+
+    try {
+      const response = await axios({
+        method: 'post',
+        url: `${proxy.$baseUrl}/file/downloadZIP?id=${id}&type=${type}&token=${token}`,
+        //data: fileKeys,
+        //params: { bucketName },
+        responseType: 'blob'
+      });
+
+      // 创建下载链接
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'files.zip');
+      document.body.appendChild(link);
+      link.click();
+
+      // 清理
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('下载失败:', error);
+      ElMessage.error("Unable to download the file");
+    }
   }
 
   const editHandle = (id) => {
@@ -860,6 +913,23 @@
 
           dialog_planner.dataForm.id = id;
           dialog_planner.visible = true;
+        }else{
+          ElMessage.error("Service error");
+        }
+        data.loading = false;
+      })
+    }else if(proxy.isAuth(['Admin'])){//assign FAI Owner
+      proxy.$nextTick(()=>{//确保DOM更新后执行操作
+        proxy.$refs['dialogForm'].resetFields(); //清除表单数据和校验规则
+      })
+      data.loading = true;
+      dialog.dataForm.id = id;
+      proxy.$http(`/fairOwner/getFairOwner/${id}`, "GET", null, true, resp => {
+        if(resp.code === 200){
+          dialog.dataForm.fairOwnerList = resp.fairOwnerList;
+          dialog.dataForm.fairOwner = resp.fair.fairOwner;
+          dialog.dataForm.clsPn = resp.fair.clsPn;
+          dialog.visible = true;
         }else{
           ElMessage.error("Service error");
         }
@@ -925,6 +995,32 @@
       }
       dialog_planner.visible = false
     }
+  }
+
+  const fairOwnerSubmit = () => {
+    //发送请求
+    proxy.$refs['dialogForm'].validate(valid => {
+      if(valid){
+        let data = {
+          "id": dialog.dataForm.id,
+          "fairOwner": dialog.dataForm.fairOwner,
+          "fromEmail": localStorageUtil.get("username"),
+          "clsPn": dialog.dataForm.clsPn
+        }
+        proxy.$http("/fairOwner/add", "PUT", data, true, resp => {
+          if(resp.flag){
+            ElMessage.success("Fair owner updated successfully")
+            dialog.visible = false;
+            loadDataList();
+          }else{
+            ElMessage.error("Unable to add the fair owner")
+          }
+
+        })
+      }else{
+        ElMessage.error('Data validation failed')
+      }
+    })
   }
 
 </script>

@@ -6,14 +6,16 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 
 注意：没有整合SVG库
 
-TODO
+Done
 1. keep the original pdf name - done
 2. add stripe style to the table - done
 3. maximum 30 characters for dev quantity and number - done
-4. add loading style for download button
+
+TODO
+1. 重新导入 tb_fair 的表结构
+2. 添加表 tb_fair_owner，并添加fair owner
 ------------------------------------------------------------------
-5. PO should be dropbox
-    - 修改po的类型为json
+
 
 6. Once carmen/jules has selected the fair owner(see col K from CNO Fair - Dev), email cno-fair-CLS@celestica.com
 7. bug fix: 
